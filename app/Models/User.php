@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string|null $language
+ * @property object|null $metadata
  *
  * Sanctum:
  * @property string $email
@@ -35,10 +36,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  *
  * @method static UserQuery query()
+ * @method static UserFactory factory(...$parameters)
  */
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory;
     use Notifiable;
 
@@ -71,6 +72,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'metadata',
     ];
 
     /**
@@ -85,6 +87,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_bot' => 'boolean',
             'is_premium' => 'boolean',
+            'metadata' => 'object',
         ];
     }
 
