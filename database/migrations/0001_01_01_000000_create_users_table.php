@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('is_bot')->nullable();
             $table->boolean('is_premium')->nullable();
             $table->string('language', 35)->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
