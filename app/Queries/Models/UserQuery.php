@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @method User findOrFail($id, $columns = ['*'])
  * @method User|null first($columns = ['*'])
  * @method User firstOrFail($columns = ['*'])
+ * @method User firstOrNew(array $attributes = [], array $values = [])
  * @method User make(array $attributes = [])
  * @method User create(array $attributes = [])
  * @method User updateOrCreate(array $attributes, array $values = [])
