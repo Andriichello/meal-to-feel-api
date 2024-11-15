@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Helpers\BotFinder;
 use App\Models\Chat;
 use App\Models\Message;
+use App\Models\Update;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Throwable;
 
 /**
@@ -26,17 +27,10 @@ class WebhookController
      */
     public function __invoke(string $token): JsonResponse
     {
-        $update = ($bot = BotFinder::byTokenOrFail($token))
-            ->getWebhookUpdate();
+        $bot = BotFinder::byTokenOrFail($token);
 
-        (new ConsoleOutput())->writeln(json_encode($update->toArray(), JSON_PRETTY_PRINT));
-
-        $msg = $update->getMessage();
-
-        if (!($msg instanceof \Telegram\Bot\Objects\Message)) {
-            $msg = $update->getMessage()
-                ->get('edited_message');
-        }
+        $upd = $bot->getWebhookUpdate();
+        $msg = $upd->getMessage();
 
         if ($msg instanceof \Telegram\Bot\Objects\Message) {
             try {
@@ -44,10 +38,16 @@ class WebhookController
                 $chat = $this->chat($msg, $from);
                 $message = $this->message($msg, $chat);
 
+                if (!$message) {
+                    throw new Exception('Failed to process message');
+                }
+
                 if ($message->type === 'photo') {
                     $bot->sendMessage([
                         'chat_id' => $message->chat_id,
-                        'text' => 'Image received.'
+                        'text' => $message->edited_at
+                            ? 'Send image as new message for it to be processed.'
+                            : 'Image received.'
                     ]);
                 }
 
@@ -57,18 +57,45 @@ class WebhookController
                         'text' => 'Video uploads are not supported.'
                     ]);
                 }
-
-                $processed = true;
             } catch (Throwable) {
-                // report to BugSnag
+                // report to BugSnag as well
+
+                $update = Update::query()
+                    ->where('unique_id', $upd->updateId)
+                    ->firstOrNew();
+
+                $update->unique_id = $upd->updateId;
+                $update->user_id = $from?->unique_id ?? $msg->from?->id;
+                $update->chat_id = $chat?->unique_id ?? $msg->chat?->id;
+                $update->message_id = $message?->unique_id ?? $msg->messageId;
+                $update->type = $msg->objectType();
+                $update->status = 'failed';
+                $update->metadata = (object) $upd->toArray();
+
+                $update->save();
             }
+
+            return response()->json(['message' => 'OK']);
+        }
+
+        if (empty($update)) {
+            $update = Update::query()
+                ->where('unique_id', $upd->updateId)
+                ->firstOrNew();
+
+            $update->unique_id = $upd->updateId;
+            $update->type = $upd->objectType();
+            $update->status = 'skipped';
+            $update->metadata = (object) $upd->toArray();
+
+            $update->save();
         }
 
         return response()->json(['message' => 'OK']);
     }
 
     /**
-     * Resolves user from the given update.
+     * Resolves user from the given Telegram message.
      * Will create a new record if such user doesn't exist yet.
      * Will update an existing record if something differs
      * (`username`, `first_name`, `language_code`, `is_bot`, `is_premium`)
@@ -101,7 +128,7 @@ class WebhookController
     }
 
     /**
-     * Resolves chat from the given update and user.
+     * Resolves chat from the given Telegram message and user.
      * Will create a new record if such chat doesn't exist yet.
      *
      * @param \Telegram\Bot\Objects\Message $msg
@@ -133,8 +160,8 @@ class WebhookController
     }
 
     /**
-     * Resolves chat from the given update and user.
-     * Will create a new record if such chat doesn't exist yet.
+     * Resolves message from the given Telegram message and chat.
+     * Will create a new record if such message doesn't exist yet.
      *
      * @param \Telegram\Bot\Objects\Message $msg
      * @param Chat|null $chat
@@ -147,8 +174,7 @@ class WebhookController
         $metadata = null;
 
         if ($text) {
-            $hasCommand = (bool) collect($msg->entities)
-                ->get('entities', collect())
+            $hasCommand = (bool) $msg->get('entities', collect())
                 ->contains('type', 'bot_command');
 
             $type = $hasCommand ? 'command' : 'text';
@@ -184,6 +210,9 @@ class WebhookController
             $message->chat_id = $chatId;
             $message->type = $type;
             $message->text = $text;
+            $message->sent_at = Carbon::createFromTimestamp($msg->date);
+            $message->edited_at = $msg->editDate
+                ? Carbon::createFromTimestamp($msg->editDate) : null;
 
             if ($type === 'unknown') {
                 $metadata = [
