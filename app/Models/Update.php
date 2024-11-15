@@ -2,31 +2,31 @@
 
 namespace App\Models;
 
-use App\Queries\Models\MessageQuery;
-use Database\Factories\MessageFactory;
+use App\Queries\Models\UpdateQuery;
+use Database\Factories\UpdateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
 
 /**
- * Class Message.
+ * Class Update.
  *
  * @property int $id
  * @property int $unique_id
+ * @property int $user_id
  * @property int $chat_id
+ * @property int $message_id
  * @property string|null $type
- * @property string|null $text
+ * @property string|null $status
  * @property object|null $metadata
- * @property Carbon|null $sent_at
- * @property Carbon|null $edited_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
- * @method static MessageQuery query()
- * @method static MessageFactory factory(...$parameters)
+ * @method static UpdateQuery query()
+ * @method static UpdateFactory factory(...$parameters)
  */
-class Message extends Model
+class Update extends Model
 {
     use HasFactory;
 
@@ -37,12 +37,12 @@ class Message extends Model
      */
     protected $fillable = [
         'unique_id',
+        'user_id',
         'chat_id',
+        'message_id',
         'type',
-        'text',
+        'status',
         'metadata',
-        'sent_at',
-        'edited_at',
     ];
 
     /**
@@ -54,8 +54,6 @@ class Message extends Model
     {
         return [
             'metadata' => 'object',
-            'sent_at' => 'datetime',
-            'edited_at' => 'datetime',
         ];
     }
 
@@ -64,10 +62,10 @@ class Message extends Model
      *
      * @param DatabaseBuilder $query
      *
-     * @return MessageQuery
+     * @return UpdateQuery
      */
-    public function newEloquentBuilder($query): MessageQuery
+    public function newEloquentBuilder($query): UpdateQuery
     {
-        return new MessageQuery($query);
+        return new UpdateQuery($query);
     }
 }

@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('updates', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('unique_id');
-            $table->unsignedBigInteger('chat_id');
-            $table->string('type', 10)->nullable();
-            $table->text('text')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('chat_id')->nullable();
+            $table->unsignedBigInteger('message_id')->nullable();
+            $table->string('type', 50)->nullable();
+            $table->string('status', 25)->nullable();
             $table->json('metadata')->nullable();
-            $table->timestamp('sent_at')->nullable();
-            $table->timestamp('edited_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['unique_id', 'chat_id']);
+            $table->unique(['unique_id']);
         });
     }
 
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        Schema::dropIfExists('updates');
     }
 };
