@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Helpers\BotFinder;
 use App\Models\Chat;
+use App\Models\File;
 use App\Models\Message;
 use App\Models\Update;
 use App\Models\User;
+use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Telegram\Bot\Api;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 use Throwable;
 
 /**
@@ -35,8 +37,6 @@ class WebhookController
         $upd = $bot->getWebhookUpdate();
         $msg = $upd->getMessage();
 
-        (new ConsoleOutput())->writeln("\n\n\n" . json_encode($upd->toArray(), JSON_PRETTY_PRINT));
-
         if ($msg instanceof \Telegram\Bot\Objects\Message) {
             try {
                 $from = $this->user($msg);
@@ -48,16 +48,9 @@ class WebhookController
                 }
 
                 if ($message->type === 'photo') {
-                    $variants = $message->photoVariants();
+                    $file = $this->loadPhoto($bot, $message, $chat);
 
-                    if (!empty($variants)) {
-                        $variant = (array) end($variants);
-                        $file = $bot->getFile($variant);
-
-                        if ($file) {
-                            $downloaded = $bot->downloadFile($file, storage_path('app/files/' . Str::random(4)));
-                        }
-
+                    if ($file && $file->exists) {
                         $bot->sendMessage([
                             'chat_id' => $message->chat_id,
                             'text' => $message->edited_at
@@ -73,11 +66,8 @@ class WebhookController
                         'text' => 'Video uploads are not supported.'
                     ]);
                 }
-            } catch (Throwable $e) {
-                (new ConsoleOutput())->writeln($e->getMessage());
-
-                // report to BugSnag as well
-
+            } catch (Throwable) {
+                // report to BugSnag
                 $update = Update::query()
                     ->where('unique_id', $upd->updateId)
                     ->firstOrNew();
@@ -247,5 +237,72 @@ class WebhookController
         }
 
         return null;
+    }
+
+    /**
+     * Load photo (from the given message) from Telegram
+     * to Google Cloud Storage.
+     *
+     * @param Api $bot
+     * @param Message $message
+     * @param Chat $chat
+     *
+     * @return File|null
+     * @throws TelegramSDKException
+     * @throws Exception
+     */
+    protected function loadPhoto(Api $bot, Message $message, Chat $chat): ?File
+    {
+        $variants = $message->photoVariants();
+
+        if (empty($variants)) {
+            return null;
+        }
+
+        $variant = (array) end($variants);
+        $file = $bot->getFile($variant);
+
+        if (empty($file)) {
+            return null;
+        }
+
+        $tempPath = Str::of(sys_get_temp_dir())
+            ->finish('/')
+            ->append(Str::random(6))
+            ->finish('/')
+            ->value();
+
+        if ($file->filePath) {
+            $fileName = Str::of($file->filePath)
+                ->afterLast('/')
+                ->value();
+
+            if (!empty($fileName)) {
+                $extension = Str::of($fileName)
+                    ->after('.')
+                    ->value();
+
+                $tempPath .= $fileName;
+            }
+        }
+
+        $resultPath = $bot->downloadFile($file, $tempPath);
+        $attributes = [
+            'file' => fopen($resultPath, 'r'),
+            'context' => $message,
+            'disk' => 'uploads',
+            'disk_path' => '/' . File::slugFor($chat)
+                . '/' . $chat->unique_id,
+            'disk_name' => $fileName ?? null,
+            'file_id' => $file->fileId,
+            'unique_id' => $file->fileUniqueId,
+            'path' => $file->filePath,
+            'type' => mime_content_type($resultPath),
+            'extension' => $extension ?? null,
+            'size' => $file->fileSize,
+        ];
+
+        return (new FileRepository())
+            ->create($attributes, true);
     }
 }
