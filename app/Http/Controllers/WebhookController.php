@@ -10,6 +10,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Throwable;
 
 /**
@@ -32,6 +35,8 @@ class WebhookController
         $upd = $bot->getWebhookUpdate();
         $msg = $upd->getMessage();
 
+        (new ConsoleOutput())->writeln("\n\n\n" . json_encode($upd->toArray(), JSON_PRETTY_PRINT));
+
         if ($msg instanceof \Telegram\Bot\Objects\Message) {
             try {
                 $from = $this->user($msg);
@@ -43,12 +48,23 @@ class WebhookController
                 }
 
                 if ($message->type === 'photo') {
-                    $bot->sendMessage([
-                        'chat_id' => $message->chat_id,
-                        'text' => $message->edited_at
-                            ? 'Send image as new message for it to be processed.'
-                            : 'Image received.'
-                    ]);
+                    $variants = $message->photoVariants();
+
+                    if (!empty($variants)) {
+                        $variant = (array) end($variants);
+                        $file = $bot->getFile($variant);
+
+                        if ($file) {
+                            $downloaded = $bot->downloadFile($file, storage_path('app/files/' . Str::random(4)));
+                        }
+
+                        $bot->sendMessage([
+                            'chat_id' => $message->chat_id,
+                            'text' => $message->edited_at
+                                ? 'Send image as new message for it to be processed.'
+                                : 'Image received.'
+                        ]);
+                    }
                 }
 
                 if ($message->type === 'video') {
@@ -57,7 +73,9 @@ class WebhookController
                         'text' => 'Video uploads are not supported.'
                     ]);
                 }
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+                (new ConsoleOutput())->writeln($e->getMessage());
+
                 // report to BugSnag as well
 
                 $update = Update::query()

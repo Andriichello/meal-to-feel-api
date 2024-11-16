@@ -60,6 +60,32 @@ class Message extends Model
     }
 
     /**
+     * Returns photo variants available to download.
+     *
+     * @return null|array<array{
+     *      width: int,
+     *      height: int,
+     *      file_id: string,
+     *      file_size: int,
+     *      file_unique_id: string,
+     * }>
+     */
+    public function photoVariants(): ?array
+    {
+        $photo = data_get($this->metadata, 'photo');
+
+        if (empty($photo)) {
+            return null;
+        }
+
+        usort($photo, function (array|object $one, array|object $two) {
+            return data_get($one, 'file_size') <=> data_get($two, 'file_size');
+        });
+
+        return $photo;
+    }
+
+    /**
      * Create a new Eloquent query builder for the model.
      *
      * @param DatabaseBuilder $query

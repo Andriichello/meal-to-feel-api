@@ -1,5 +1,7 @@
 <?php
 
+use League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility;
+
 return [
 
     /*
@@ -55,6 +57,17 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
+        ],
+
+        'uploads' => [
+            'driver' => 'gcs',
+            'key_file_path' => base_path('./google-cloud.json'),
+            'bucket' => env('GOOGLE_CLOUD_BUCKET'),
+            'path_prefix' => env('GOOGLE_CLOUD_PATH_PREFIX', ''),
+            'apiEndpoint' => env('GOOGLE_CLOUD_URL'),
+            'visibility' => 'private',
+            'visibility_handler' => UniformBucketLevelAccessVisibility::class,
+            'metadata' => ['cacheControl' => 'public,max-age=86400'],
         ],
 
     ],

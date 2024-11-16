@@ -14,6 +14,8 @@
 Homestead.json
 Homestead.yaml
 auth.json
+google-cloud.json
+google-cloud*.json
 npm-debug.log
 yarn-error.log
 /.fleet
