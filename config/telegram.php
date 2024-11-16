@@ -1,5 +1,9 @@
 <?php
 
+use App\Commands\AddMeal;
+use App\Commands\Cancel;
+use App\Commands\Skip;
+use App\Commands\Test;
 use Telegram\Bot\Commands\HelpCommand;
 
 return [
@@ -40,7 +44,11 @@ return [
              */
             'allowed_updates' => null,
             'commands' => [
-                //Acme\Project\Commands\MyTelegramBot\BotCommand::class
+                HelpCommand::class,
+                Test::class,
+                Cancel::class,
+                Skip::class,
+                AddMeal::class,
             ],
         ],
 

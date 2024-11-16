@@ -69,10 +69,14 @@ class WebhookController
                 );
             }
 
+            $bot->processCommand($upd);
+
             return response()->json(['message' => 'OK']);
         }
 
         BotRecorder::update($upd, 'skipped');
+
+        $bot->processCommand($upd);
 
         return response()->json(['message' => 'OK']);
     }
