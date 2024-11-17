@@ -6,10 +6,12 @@ namespace App\Models;
 use App\Queries\Models\UserQuery;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Class User.
@@ -34,6 +36,8 @@ use Illuminate\Support\Carbon;
  *
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property Chat[]|Collection $chats
  *
  * @method static UserQuery query()
  * @method static UserFactory factory(...$parameters)
@@ -76,19 +80,35 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_bot' => 'boolean',
+        'is_premium' => 'boolean',
+        'metadata' => 'object',
+    ];
+
+    /**
+     * The loadable relationships for the model.
+     *
+     * @var array
+     */
+    protected array $relationships = [
+        'chats',
+    ];
+
+    /**
+     * Associated chats relation query.
+     *
+     * @return HasMany
+     */
+    public function chats(): HasMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_bot' => 'boolean',
-            'is_premium' => 'boolean',
-            'metadata' => 'object',
-        ];
+        return $this->hasMany(Chat::class, 'user_id', 'unique_id');
     }
 
     /**

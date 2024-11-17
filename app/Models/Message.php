@@ -6,6 +6,7 @@ use App\Queries\Models\MessageQuery;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
 
@@ -22,6 +23,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $edited_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property Chat $chat
  *
  * @method static MessageQuery query()
  * @method static MessageFactory factory(...$parameters)
@@ -46,17 +49,33 @@ class Message extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array
      */
-    protected function casts(): array
+    protected $casts = [
+        'metadata' => 'object',
+        'sent_at' => 'datetime',
+        'edited_at' => 'datetime',
+    ];
+
+    /**
+     * The loadable relationships for the model.
+     *
+     * @var array
+     */
+    protected array $relationships = [
+        'chat',
+    ];
+
+    /**
+     * Associated chat relation query.
+     *
+     * @return BelongsTo
+     */
+    public function chat(): BelongsTo
     {
-        return [
-            'metadata' => 'object',
-            'sent_at' => 'datetime',
-            'edited_at' => 'datetime',
-        ];
+        return $this->belongsTo(Chat::class, 'chat_id', 'unique_id');
     }
 
     /**

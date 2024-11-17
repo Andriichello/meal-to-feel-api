@@ -69,6 +69,15 @@ class File extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'metadata' => 'object',
+    ];
+
+    /**
      * The loadable relationships for the model.
      *
      * @var array
@@ -76,18 +85,6 @@ class File extends Model
     protected array $relationships = [
         'context',
     ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'metadata' => 'object',
-        ];
-    }
 
     /**
      * Get the context associated with the model.

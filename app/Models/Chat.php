@@ -6,8 +6,10 @@ use App\Queries\Models\ChatQuery;
 use Database\Factories\ChatFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Class Chat.
@@ -20,6 +22,8 @@ use Illuminate\Support\Carbon;
  * @property object|null $metadata
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property Message[]|Collection $messages
  *
  * @method static ChatQuery query()
  * @method static ChatFactory factory(...$parameters)
@@ -42,15 +46,31 @@ class Chat extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array
      */
-    protected function casts(): array
+    protected $casts = [
+        'metadata' => 'object',
+    ];
+
+    /**
+     * The loadable relationships for the model.
+     *
+     * @var array
+     */
+    protected array $relationships = [
+        'messages',
+    ];
+
+    /**
+     * Associated messages relation query.
+     *
+     * @return HasMany
+     */
+    public function messages(): HasMany
     {
-        return [
-            'metadata' => 'object',
-        ];
+        return $this->hasMany(Message::class, 'chat_id', 'unique_id');
     }
 
     /**

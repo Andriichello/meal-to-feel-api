@@ -6,6 +6,7 @@ use App\Queries\Models\UpdateQuery;
 use Database\Factories\UpdateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
 
@@ -22,6 +23,10 @@ use Illuminate\Support\Carbon;
  * @property object|null $metadata
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property User $user
+ * @property Chat $chat
+ * @property Message $message
  *
  * @method static UpdateQuery query()
  * @method static UpdateFactory factory(...$parameters)
@@ -44,17 +49,54 @@ class Update extends Model
         'status',
         'metadata',
     ];
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'metadata' => 'object',
+    ];
 
     /**
-     * Get the attributes that should be cast.
+     * The loadable relationships for the model.
      *
-     * @return array<string, string>
+     * @var array
      */
-    protected function casts(): array
+    protected array $relationships = [
+        'chat',
+        'user',
+        'message',
+    ];
+
+    /**
+     * Associated chat relation query.
+     *
+     * @return BelongsTo
+     */
+    public function chat(): BelongsTo
     {
-        return [
-            'metadata' => 'object',
-        ];
+        return $this->belongsTo(Chat::class, 'chat_id', 'unique_id');
+    }
+
+    /**
+     * Associated user relation query.
+     *
+     * @return BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'unique_id');
+    }
+
+    /**
+     * Associated message relation query.
+     *
+     * @return BelongsTo
+     */
+    public function message(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'message_id', 'unique_id');
     }
 
     /**
