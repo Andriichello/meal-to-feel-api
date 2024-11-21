@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
 use Telegram\Bot\Api;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 
 /**
  * Class BotResolver.
@@ -120,7 +121,16 @@ class BotResolver
             ];
         }
 
-        if ($text || $msg->photo || $msg->video) {
+        if ($msg->document) {
+            $type = 'document';
+
+            $metadata = [
+                ...($metadata ?? []),
+                'document' => $msg->document,
+            ];
+        }
+
+        if ($text || $msg->photo || $msg->video || $msg->document) {
             $type = $type ?? 'unknown';
             $chatId = $chat?->unique_id ?? $msg->chat->id;
 
@@ -154,27 +164,26 @@ class BotResolver
         return null;
     }
 
+
     /**
-     * Downloads photo (from the given message) using Telegram Bot API
-     * and uploads it to Google Cloud Storage bucket (`uploads`).
+     * Stores downloaded file and uploads it to
+     * Google Cloud Storage bucket (`uploads`).
      *
+     * @param array{
+     *      file_id: string,
+     *      file_unique_id: string,
+     * } $params
      * @param Api $bot
      * @param Message $message
      * @param Chat $chat
      *
      * @return File|null
+     * @throws TelegramSDKException
      * @throws Exception
      */
-    public static function photo(Api $bot, Message $message, Chat $chat): ?File
+    protected static function downloadFile(array $params, Api $bot, Message $message, Chat $chat): ?File
     {
-        $variants = $message->photoVariants();
-
-        if (empty($variants)) {
-            return null;
-        }
-
-        $variant = (array) end($variants);
-        $file = $bot->getFile($variant);
+        $file = $bot->getFile($params);
 
         if (empty($file)) {
             return null;
@@ -218,5 +227,72 @@ class BotResolver
 
         return (new FileRepository())
             ->create($attributes, true);
+    }
+
+    /**
+     * Downloads photo (from the given message) using Telegram Bot API
+     * and uploads it to Google Cloud Storage bucket (`uploads`).
+     *
+     * @param Api $bot
+     * @param Message $message
+     * @param Chat $chat
+     *
+     * @return File|null
+     * @throws Exception
+     */
+    public static function photo(Api $bot, Message $message, Chat $chat): ?File
+    {
+        $variants = $message->photoVariants();
+
+        if (empty($variants)) {
+            return null;
+        }
+
+        $variant = (array) end($variants);
+        return static::downloadFile($variant, $bot, $message, $chat);
+    }
+
+    /**
+     * Downloads video (from the given message) using Telegram Bot API
+     * and uploads it to Google Cloud Storage bucket (`uploads`).
+     *
+     * @param Api $bot
+     * @param Message $message
+     * @param Chat $chat
+     *
+     * @return File|null
+     * @throws Exception
+     */
+    public static function video(Api $bot, Message $message, Chat $chat): ?File
+    {
+        $variant = $message->videoVariant();
+
+        if (empty($variant)) {
+            return null;
+        }
+
+        return static::downloadFile($variant, $bot, $message, $chat);
+    }
+
+    /**
+     * Downloads document (from the given message) using Telegram Bot API
+     * and uploads it to Google Cloud Storage bucket (`uploads`).
+     *
+     * @param Api $bot
+     * @param Message $message
+     * @param Chat $chat
+     *
+     * @return File|null
+     * @throws Exception
+     */
+    public static function document(Api $bot, Message $message, Chat $chat): ?File
+    {
+        $variant = $message->documentVariant();
+
+        if (empty($variant)) {
+            return null;
+        }
+
+        return static::downloadFile($variant, $bot, $message, $chat);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFiles;
 use App\Queries\Models\MessageQuery;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,7 @@ use Illuminate\Support\Carbon;
 class Message extends Model
 {
     use HasFactory;
+    use HasFiles;
 
     /**
      * The attributes that are mass assignable.
@@ -66,6 +68,7 @@ class Message extends Model
      */
     protected array $relationships = [
         'chat',
+        'files',
     ];
 
     /**
@@ -102,6 +105,62 @@ class Message extends Model
         });
 
         return $photo;
+    }
+
+    /**
+     * Returns video variant available to download.
+     *
+     * @return null|array<array{
+     *      file_name: string,
+     *      file_id: string,
+     *      file_size: int,
+     *      file_unique_id: string,
+     *      mime_type: string,
+     *      thumb: array{
+     *          file_id: string,
+     *          file_size: int,
+     *          file_unique_id: string,
+     *     },
+     *     thumbnail: array{
+     *           file_id: string,
+     *           file_size: int,
+     *           file_unique_id: string,
+     *      },
+     * }>
+     */
+    public function videoVariant(): ?array
+    {
+        $video = data_get($this->metadata, 'video');
+
+        return empty($video) ? null : (array) $video;
+    }
+
+    /**
+     * Returns document variant available to download.
+     *
+     * @return null|array<array{
+     *      file_name: string,
+     *      file_id: string,
+     *      file_size: int,
+     *      file_unique_id: string,
+     *      mime_type: string,
+     *      thumb: array{
+     *          file_id: string,
+     *          file_size: int,
+     *          file_unique_id: string,
+     *     },
+     *     thumbnail: array{
+     *           file_id: string,
+     *           file_size: int,
+     *           file_unique_id: string,
+     *      },
+     * }>
+     */
+    public function documentVariant(): ?array
+    {
+        $document = data_get($this->metadata, 'document');
+
+        return empty($document) ? null : (array) $document;
     }
 
     /**

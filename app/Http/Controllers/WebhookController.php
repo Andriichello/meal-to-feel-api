@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Helpers\BotFinder;
 use App\Helpers\BotRecorder;
 use App\Helpers\BotResolver;
+use App\Models\Message;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Throwable;
 
 /**
@@ -29,6 +31,8 @@ class WebhookController
         $upd = $bot->getWebhookUpdate();
         $msg = $upd->getMessage();
 
+        (new ConsoleOutput())->writeln(json_encode($upd->toArray(), JSON_PRETTY_PRINT) . "\n\n\n");
+
         if ($msg instanceof \Telegram\Bot\Objects\Message) {
             try {
                 $from = BotResolver::user($msg);
@@ -37,6 +41,19 @@ class WebhookController
 
                 if (!$message) {
                     throw new Exception('Failed to process message.');
+                }
+
+                if ($message->type === 'document') {
+                    $document = BotResolver::document($bot, $message, $chat);
+
+                    if ($document && $document->exists) {
+                        $bot->sendMessage([
+                            'chat_id' => $message->chat_id,
+                            'text' => $message->edited_at
+                                ? 'Send file as new message for it to be processed.'
+                                : 'File received.'
+                        ]);
+                    }
                 }
 
                 if ($message->type === 'photo') {
@@ -53,12 +70,25 @@ class WebhookController
                 }
 
                 if ($message->type === 'video') {
+                    $video = BotResolver::video($bot, $message, $chat);
+
+                    if ($video && $video->exists) {
+                        $bot->sendMessage([
+                            'chat_id' => $message->chat_id,
+                            'text' => $message->edited_at
+                                ? 'Send video as new message for it to be processed.'
+                                : 'Video received.'
+                        ]);
+                    }
+
                     $bot->sendMessage([
                         'chat_id' => $message->chat_id,
                         'text' => 'Video uploads are not supported.'
                     ]);
                 }
-            } catch (Throwable) {
+
+                $this->after($message);
+            } catch (Throwable $e) {
                 // report to BugSnag
                 BotRecorder::update(
                     $upd,
@@ -69,15 +99,24 @@ class WebhookController
                 );
             }
 
-            $bot->processCommand($upd);
-
             return response()->json(['message' => 'OK']);
         }
 
         BotRecorder::update($upd, 'skipped');
 
-        $bot->processCommand($upd);
-
         return response()->json(['message' => 'OK']);
+    }
+
+    /**
+     * Perform actions after processing the webhook update.
+     *
+     * @param Message $message
+     * @return void
+     */
+    protected function after(Message $message): void
+    {
+        if ($message->chat) {
+            //
+        }
     }
 }
