@@ -50,6 +50,10 @@ return [
                 Skip::class,
                 AddMeal::class,
             ],
+
+            'flows' => [
+                \App\Flows\AddMeal::class,
+            ],
         ],
 
         //        'mySecondBot' => [

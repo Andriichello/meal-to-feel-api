@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreign('chat_id')
                 ->references('unique_id')
                 ->on('chats')
-                ->onDelete('set null');
+                ->onDelete('cascade');
 
             $table->foreign('user_id')
                 ->references('unique_id')

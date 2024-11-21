@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Helpers\BotFinder;
 use App\Helpers\BotRecorder;
 use App\Helpers\BotResolver;
+use App\Helpers\FlowHelper;
 use App\Models\Message;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 use Throwable;
 
 /**
@@ -111,12 +113,13 @@ class WebhookController
      * Perform actions after processing the webhook update.
      *
      * @param Message $message
+     *
      * @return void
+     * @throws TelegramSDKException
      */
     protected function after(Message $message): void
     {
-        if ($message->chat) {
-            //
-        }
+        $helper = new FlowHelper();
+        $helper->handle($message);
     }
 }
