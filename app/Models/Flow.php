@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Queries\Models\FileQuery;
 use App\Queries\Models\FlowQuery;
 use Database\Factories\FlowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
+use stdClass;
 
 /**
  * Class Flow.
@@ -24,6 +26,9 @@ use Illuminate\Support\Carbon;
  * @property object|null $metadata
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property string|null $date
+ * @property string|null $time
  *
  * @property Chat $chat
  * @property User|null $user
@@ -51,6 +56,8 @@ class Flow extends Model
         'status',
         'step',
         'metadata',
+        'date',
+        'time',
     ];
 
     /**
@@ -112,6 +119,102 @@ class Flow extends Model
     public function end(): BelongsTo
     {
         return $this->belongsTo(Message::class, 'end_id', 'unique_id');
+    }
+
+    /**
+     * Associated files query.
+     *
+     * @return FileQuery
+     */
+    public function files(): FileQuery
+    {
+        $query = File::query();
+
+        $query->whereContext(Message::class)
+            ->where('messages.chat_id', $this->chat_id)
+            ->join('messages', 'messages.id', '=', 'files.context_id');
+
+        $query->where(function (FileQuery $q) {
+            $q->where('messages.unique_id', '>=', $this->beg_id);
+
+            if ($this->end_id) {
+                $q->where('messages.unique_id', '<=', $this->end_id);
+            }
+        });
+
+        return $query;
+    }
+
+    /**
+     * Associated images query.
+     *
+     * @return FileQuery
+     */
+    public function images(): FileQuery
+    {
+        return $this->files()
+            ->where(function (FileQuery $q) {
+                $q->whereLike('messages.type', 'image/%')
+                    ->orWhereLike('messages.type', 'photo%');
+            });
+    }
+
+    /**
+     * Get `date` attribute from `metadata`.
+     *
+     * @return string|null
+     */
+    public function getDateAttribute(): ?string
+    {
+        return data_get($this->metadata, 'date');
+    }
+
+    /**
+     * Set `date` attribute on `metadata`.
+     *
+     * @param Carbon|string|null $date
+     *
+     * @return void
+     */
+    public function setDateAttribute(Carbon|string|null $date): void
+    {
+        if ($date instanceof Carbon) {
+            $date = $date->format('d.m.Y');
+        }
+
+        $metadata = $this->metadata ?? new stdClass();
+        data_set($metadata, 'date', $date);
+
+        $this->attributes['metadata'] = json_encode($metadata);
+    }
+
+    /**
+     * Get `time` attribute from `metadata`.
+     *
+     * @return string|null
+     */
+    public function getTimeAttribute(): ?string
+    {
+        return data_get($this->metadata, 'time');
+    }
+
+    /**
+     * Set `time` attribute on `metadata`.
+     *
+     * @param Carbon|string|null $time
+     *
+     * @return void
+     */
+    public function setTimeAttribute(Carbon|string|null $time): void
+    {
+        if ($time instanceof Carbon) {
+            $time = $time->format('H:i');
+        }
+
+        $metadata = $this->metadata ?? new stdClass();
+        data_set($metadata, 'time', $time);
+
+        $this->attributes['metadata'] = json_encode($metadata);
     }
 
     /**

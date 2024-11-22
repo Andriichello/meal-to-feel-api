@@ -47,46 +47,14 @@ class WebhookController
 
                 if ($message->type === 'document') {
                     $document = BotResolver::document($bot, $message, $chat);
-
-                    if ($document && $document->exists) {
-                        $bot->sendMessage([
-                            'chat_id' => $message->chat_id,
-                            'text' => $message->edited_at
-                                ? 'Send file as new message for it to be processed.'
-                                : 'File received.'
-                        ]);
-                    }
                 }
 
                 if ($message->type === 'photo') {
                     $photo = BotResolver::photo($bot, $message, $chat);
-
-                    if ($photo && $photo->exists) {
-                        $bot->sendMessage([
-                            'chat_id' => $message->chat_id,
-                            'text' => $message->edited_at
-                                ? 'Send image as new message for it to be processed.'
-                                : 'Image received.'
-                        ]);
-                    }
                 }
 
                 if ($message->type === 'video') {
                     $video = BotResolver::video($bot, $message, $chat);
-
-                    if ($video && $video->exists) {
-                        $bot->sendMessage([
-                            'chat_id' => $message->chat_id,
-                            'text' => $message->edited_at
-                                ? 'Send video as new message for it to be processed.'
-                                : 'Video received.'
-                        ]);
-                    }
-
-                    $bot->sendMessage([
-                        'chat_id' => $message->chat_id,
-                        'text' => 'Video uploads are not supported.'
-                    ]);
                 }
 
                 $this->after($message);

@@ -46,8 +46,8 @@ abstract class BaseFlow
             if ($active->beg_id === $message->unique_id) {
                 $this->initiate($message->chat, $api);
 
-                $active->step = FlowStep::Initiation->value;
                 $active->status = FlowStatus::Initiated->value;
+                $active->step = FlowStep::Initiation->value;
 
                 $active->save();
             }

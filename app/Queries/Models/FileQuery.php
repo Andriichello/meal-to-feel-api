@@ -3,7 +3,13 @@
 namespace App\Queries\Models;
 
 use App\Models\File;
+use App\Providers\MorphServiceProvider;
 use App\Queries\BaseQuery;
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as DbBuilder;
+use Illuminate\Support\Arr;
 
 /**
  * Class FileQuery.
@@ -26,5 +32,50 @@ use App\Queries\BaseQuery;
  */
 class FileQuery extends BaseQuery
 {
-    //
+    /**
+     * Get files where `context_type` is for the given class or morph.
+     *
+     * @param string $classOrMorph
+     *
+     * @return FileQuery
+     */
+    public function whereContext(string $classOrMorph): FileQuery
+    {
+        if (str_contains($classOrMorph, '\\') || class_exists($classOrMorph)) {
+            $contextType = data_get(
+                array_flip(Relation::$morphMap),
+                $classOrMorph,
+                MorphServiceProvider::slugOf($classOrMorph)
+            );
+        }
+
+        $contextType = $contextType ?? MorphServiceProvider::slugOf($classOrMorph);
+
+        $this->where('context_type', $contextType);
+
+        return $this;
+    }
+
+    /**
+     * Get files where `context_id` is one of given values.
+     *
+     * @param Closure|Builder|DbBuilder|array|int $id
+     * @return FileQuery
+     */
+    public function whereContextId(Closure|Builder|DbBuilder|array|int $id): FileQuery
+    {
+        if ($id instanceof Closure) {
+            $this->whereIn('context_id', $id);
+        }
+
+        if ($id instanceof Builder || $id instanceof DbBuilder) {
+            $this->whereIn('context_id', $id);
+        }
+
+        if (is_array($id) || is_scalar($id)) {
+            $this->whereIn('context_id', Arr::wrap($id));
+        }
+
+        return $this;
+    }
 }
