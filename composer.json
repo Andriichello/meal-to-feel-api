@@ -7,9 +7,11 @@
     "require": {
         "php": "^8.2",
         "ext-pdo": "*",
+        "guzzlehttp/guzzle": "^7.9",
         "irazasyed/telegram-bot-sdk": "^3.14",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
+        "openai-php/laravel": "^0.10.2",
         "spatie/laravel-google-cloud-storage": "^2.3"
     },
     "require-dev": {
