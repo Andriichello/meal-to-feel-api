@@ -186,13 +186,19 @@ class DuskHelper
         $args = [
             '--window-size=1920,1080',
             '--disable-search-engine-choice-screen',
-            '--disable-dev-shm-usage',
+            'disable-infobars',
+            '--no-sandbox',          // Required for some environments
+            '--enable-automation',   // Ensure automation features
+            '--disable-extensions',
+            '--disable-dev-shm-usage', // Avoid shared memory issues
+            '--disable-blink-features=AutomationControlled', // Mask automated behavior
+            '--allow-running-insecure-content', // Allow insecure content (if needed)
+            '--user-agent=' . 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         ];
 
         if ($this->headless) {
             $args[] = '--headless';
             $args[] = '--disable-gpu';
-            $args[] = '--no-sandbox';
         }
 
         $options = (new ChromeOptions())
