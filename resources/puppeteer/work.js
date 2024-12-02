@@ -2,142 +2,120 @@ import puppeteer from 'puppeteer';
 import PuppeteerExtra from "puppeteer-extra";
 import Stealth from "puppeteer-extra-plugin-stealth";
 
+async function findButton(page, text) {
+    return await page.evaluateHandle(() => {
+        return Array.from(document.querySelectorAll('button'))
+            .find(btn => btn.textContent.startsWith(text));
+    });
+}
+
 PuppeteerExtra.use(Stealth());
 
 // Launch the browser and open a new blank page
 const browser = await puppeteer.connect({
-    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/a193c7da-457a-40f4-885d-f22ade09962b'
+    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/7baa8501-e50d-42e0-bd82-cc8f86b5df2a'
 });
 const page = await browser.newPage();
 
 // Navigate the page to a URL.
-await page.goto('https://chatgpt.com/');
+await page.goto('https://chatgpt.com');
 await page.setViewport({width: 1080, height: 1024});
 
-// Wait for network resources to fully load
 await page.waitForNetworkIdle();
-// Capture screenshot
-await page.screenshot({
-    path: '/var/www/meal-to-feel-api/resources/puppeteer/screenshots/before.png',
-});
-
-console.log('looking for...')
 
 let profileButton = await page.$('[data-testid="profile-button"]');
 
 if (profileButton) {
-    console.log('There is a profile button');
-    // await profileButton.click();
+    console.log('is logged in');
     profileButton = null;
 } else {
-    console.log('there is no profile button');
+    console.log('is not logged in');
 
-    let logIn = await page.$('[data-testid="login-button"]');
+    let logIn = await page.$('[data-testid="welcome-login-button"]')
+        ?? await page.$('[data-testid="login-button"]');
 
     if (logIn) {
         console.log('there is a log in button');
         await logIn.click();
         logIn = null;
-    } else {
-        console.log('there is none');
     }
 
-    let welcomeLogIn = await page.$('[data-testid="welcome-login-button"]');
+    console.log('waiting for an email input');
+    await page.waitForSelector(
+        '#email-input, [name="username"], [type="email"]',
+        { timeout: 5000 },
+    )
 
-    if (welcomeLogIn) {
-        console.log('there is a welcome log in button');
-        await welcomeLogIn.click();
-        welcomeLogIn = null;
-    } else {
-        console.log('there is none');
-    }
-
-    // Wait for network resources to fully load
-    await page.waitForNetworkIdle();
-    // Capture screenshot
-    await page.screenshot({
-        path: '/var/www/meal-to-feel-api/resources/puppeteer/screenshots/after.png',
-    });
-
-    console.log('looking for an email');
-
-    let emailInput = await page.$('#email-input');
+    console.log('looking for an email input');
+    let emailInput = await page.$('#email-input, [name="username"], [type="email"]');
 
     if (emailInput) {
-        console.log('there is an email input');
-        await emailInput.type('mealtofeel@gmail.com');
+        await emailInput.type('mealtofeel+one@gmail.com');
         emailInput = null;
-    } else {
-        console.log('there is no email input');
     }
 
-    await page.waitForNetworkIdle();
+    console.log('waiting for a continue button');
+    await page.waitForSelector(
+        '.continue-btn',
+        { timeout: 2000 },
+    )
 
+    console.log('looking for a continue button');
     let continueButton = await page.$('.continue-btn');
 
     if (continueButton) {
         console.log('there is a continue button');
-        try {
-            await continueButton.click();
-        } catch (e) {
-            //
-        }
+        await continueButton.click();
         continueButton = null;
-    } else {
-        console.log('there is no continue button');
     }
 
-    await page.waitForNetworkIdle();
+    console.log('waiting for a password input');
+    await page.waitForSelector(
+        '#password, [name="password"], [type="password"]',
+        { timeout: 5000 },
+    )
 
-    let passwordInput = await page.$('input[type="password"]');
+    console.log('looking for password input');
+    let passwordInput = await page.$('#password, [name="password"], [type="password"]');
 
     if (passwordInput) {
-        console.log('there is an password input');
-        passwordInput.value = 'xzymaNjaVeV2GaP';
-        await passwordInput.type('');
-
+        console.log('there is a password input');
+        // passwordInput.value = 'xzymaNjaVeV2GaP';
+        await passwordInput.type('xzymaNjaVeV2GaP');
         passwordInput = null;
-    } else {
-        console.log('there is no password input');
     }
 
-    await page.waitForNetworkIdle();
+    console.log('waiting for a login button');
 
-    let logInButton = await page.$('button[type="submit"]');
+
+    console.log('looking for a login button');
+    let logInButton = await page.locator('button ._button-login-password, [type="submit"], [name="action"]');
 
     if (logInButton) {
         console.log('there is a log in button');
+
         await logInButton.click();
         logInButton = null;
+
+        console.log('clicked log in button');
+        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
     } else {
         console.log('there is no log in button');
     }
-
-    await page.waitForNetworkIdle();
 }
 
 profileButton = await page.$('[data-testid="profile-button"]');
 
-if (!profileButton) {
-    console.log('Failed to log in');
+if (profileButton) {
+    console.log('is logged in');
+    profileButton = null;
+} else {
+    console.log('is not logged in');
 }
 
-// <div className="gap-2 flex items-center pr-1 leading-[0]">
-//     <button aria-label="Open Profile Menu" data-testid="profile-button"
-//             className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-token-main-surface-secondary focus-visible:bg-token-main-surface-secondary focus-visible:outline-0"
-//             type="button" id="radix-:r7:" aria-haspopup="menu" aria-expanded="false" data-state="closed">
-//         <div className="flex items-center justify-center overflow-hidden rounded-full">
-//             <div className="relative flex"><img alt="User" width="32" height="32" className="rounded-sm"
-//                                                 referrerPolicy="no-referrer"
-//                                                 src="https://s.gravatar.com/avatar/2c53a55abe6aeca51c739f4a0234b926?s=480&amp;r=pg&amp;d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fme.png"/>
-//             </div>
-//         </div>
-//     </button>
-// </div>
-
-await page.waitForNetworkIdle();
-
 let fileInput = await page.$('input[type=file]');
+
+console.log({fileInput})
 
 if (fileInput) {
     console.log('there is a file input');
@@ -166,7 +144,8 @@ if (fileInput) {
         console.log('The file input is disabled');
     }
 
-    // await fileInput.uploadFile('/var/www/meal-to-feel-api/resources/puppeteer/screenshots/after.png');
+    // await fileInput.uploadFile('/var/www/meal-to-feel-api/resources/puppeteer/screenshots/fruit-salad.jpg');
+    // google-chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=/tmp/chrome-instance;
 } else {
     console.log('there is no file input');
 }
@@ -187,10 +166,53 @@ const attachDisabled = await page.evaluate(() => {
     return result;
 })
 
-if (attachDisabled) {
-    console.log('attach is disabled');
+await page.waitForNetworkIdle();
+
+let textarea = await page.$('textarea');
+
+if (textarea) {
+    const prompt = 'Here is a photo of the dish. Please estimate calories, nutrients. '
+        + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}. For now just return the JSON example I provided.'
+        // + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}. For now just return the JSON example I provided.'
+        + '';
+    // + '\n';
+
+    await textarea.type(prompt);
+}
+
+try {
+    console.log('Waiting for the stop streaming button to disappear...');
+    await page.waitForFunction(
+        (sel) => !document.querySelector(sel),
+        { timeout: 30000 }, // Timeout in milliseconds
+        'button[data-testid="stop-button"]'
+    );
+    console.log('Button disappeared');
+} catch (error) {
+    console.error('Button did not disappear within the timeout', error);
+}
+
+await page.waitForNetworkIdle();
+
+const jsonElement = await page.$('code.hljs.language-json');
+
+if (jsonElement) {
+    console.log('Found the JSON element');
+
+    // Get the inner text of the element
+    const jsonString = await page.evaluate(element => element.innerText, jsonElement);
+
+    try {
+        console.log(jsonString)
+
+        // Parse the JSON string into an object
+        const jsonData = JSON.parse(jsonString);
+        console.log('Parsed JSON:', jsonData);
+    } catch (error) {
+        console.error('Failed to parse JSON:', error);
+    }
 } else {
-    console.log('attach is enabled');
+    console.log('JSON element not found');
 }
 
 // await browser.close();
