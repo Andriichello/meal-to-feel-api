@@ -19,7 +19,6 @@ async function getWebSocketURL(port = 9222) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(data);
-                    console.log(parsed);
 
                     resolve(parsed?.WebSocketDebuggerUrl ?? parsed?.webSocketDebuggerUrl)
                 } catch (error) {
@@ -47,17 +46,39 @@ const wsUrl = await getWebSocketURL(debuggerPort);
 PuppeteerExtra.use(Stealth());
 
 // Launch the browser and open a new blank page
-const browser = await puppeteer.connect({ browserWSEndpoint: wsUrl });
+const browser = await puppeteer.connect({browserWSEndpoint: wsUrl});
 const page = await browser.newPage();
+await page.setViewport({width: 1080, height: 1024});
 
 // Navigate the page to a URL.
 await page.goto('https://chatgpt.com');
-await page.setViewport({width: 1080, height: 1024});
 
 // Wait until everything loads.
 await page.waitForNetworkIdle();
 
-let profileButton = await page.$('[data-testid="profile-button"], [data-testid="accounts-profile-button"]');
+// Select the section element
+const section = await page.$('section[data-testid="screen-sidebar"]');
+
+// Retrieve the value of the --sidebar-leading-height custom property
+const sidebarLeadingHeight = await page.evaluate((element) => {
+    return getComputedStyle(element).getPropertyValue('--sidebar-leading-height').trim();
+}, section);
+
+// Check if the --sidebar-leading-height is 0px
+if (sidebarLeadingHeight === '0px') {
+    console.log('sidebar is closed');
+    await page.mouse.click(30, 30, { delay: 100 });
+
+    try {
+        await page.waitForNetworkIdle({timeout: 2000});
+    } catch (Error) {
+        //
+    }
+} else {
+    console.log('sidebar is opened');
+}
+
+let profileButton = await page.waitForSelector('[data-testid="profile-button"], [data-testid="accounts-profile-button"]');
 
 if (profileButton) {
     console.log('is logged in');
@@ -70,6 +91,8 @@ if (profileButton) {
 
     console.log(loggedInAs);
 
+    await profileButton.click();
+
     if (loggedInAs !== username) {
         profileButton = null;
         await page.goto('https://chatgpt.com/auth/logout');
@@ -79,7 +102,7 @@ if (profileButton) {
     }
 }
 
-if (!profileButton){
+if (!profileButton) {
     console.log('is not logged in');
 
     let logIn = await page.$('[data-testid="welcome-login-button"]')
@@ -94,7 +117,7 @@ if (!profileButton){
     console.log('waiting for an email input');
     await page.waitForSelector(
         '#email-input, [name="username"], [type="email"]',
-        { timeout: 10000 },
+        {timeout: 10000},
     )
 
     console.log('looking for an email input');
@@ -108,7 +131,7 @@ if (!profileButton){
     console.log('waiting for a continue button');
     await page.waitForSelector(
         '.continue-btn',
-        { timeout: 2000 },
+        {timeout: 2000},
     )
 
     console.log('looking for a continue button');
@@ -123,7 +146,7 @@ if (!profileButton){
     console.log('waiting for a password input');
     await page.waitForSelector(
         '#password, [name="password"], [type="password"]',
-        { timeout: 5000 },
+        {timeout: 5000},
     )
 
     console.log('looking for password input');
@@ -150,7 +173,7 @@ if (!profileButton){
         console.log('clicked log in button');
 
         try {
-            await page.waitForNetworkIdle({ timeout: 10000 });
+            await page.waitForNetworkIdle({timeout: 10000});
         } catch (Error) {
             //
         }
@@ -178,6 +201,80 @@ if (gettingStarted) {
 
     await page.keyboard.down('Enter');
     await page.keyboard.up('Enter');
+}
+
+console.log('looking for try after');
+
+const attachButton = await page.$('button[aria-label="Attach files is unavailable"]');
+
+if (attachButton) {
+    const isDisabled = await attachButton
+        .evaluate(button => button.disabled);
+
+    if (isDisabled) {
+        await attachButton.hover();
+
+        try {
+            await page.waitForNetworkIdle({timeout: 1000});
+        } catch (Error) {
+            //
+        }
+    }
+
+    const now = await page.evaluate(() => {
+        return (new Date()).toISOString();
+    });
+
+    const tryAfter = await page.evaluate(() => {
+        let result = null;
+
+        [...document.querySelectorAll('div div.text-token-text-primary div')]
+            .forEach(function (div) {
+                console.log(div.textContent);
+
+                const match = (div.textContent ?? '')
+                    .match(/try again after\s*(\d{1,2}:\d{2}\s?[APap][Mm])/)
+
+                if (match) {
+                    result = match[1];
+                }
+            });
+
+        return result;
+    });
+
+    if (tryAfter) {
+        console.log('now: ' + now);
+        console.log('try after: ' + tryAfter);
+
+        await page.close();
+        await browser.disconnect();
+
+        // postponed
+        process.exit(-5);
+    }
+}
+
+const attachDisabled = await page.evaluate(() => {
+    let result = null;
+
+    [...document.querySelectorAll('button')]
+        .filter(b => b.hasAttribute('aria-label'))
+        .forEach(function (b) {
+            if (b.getAttribute('aria-label').toLowerCase().startsWith('attach files')) {
+                result = b.disabled;
+            }
+        })
+
+    return result;
+});
+
+if (attachDisabled) {
+    await page.close();
+    await browser.disconnect();
+
+    // Postponed (Attaching files is not available)
+    process.exit(-1);
 }
 
 let fileInput = await page.$('input[type=file]');
@@ -214,30 +311,6 @@ if (fileInput) {
     console.log('there is no file input');
 }
 
-console.log('looking for attach button');
-
-const attachDisabled = await page.evaluate(() => {
-    let result = null;
-
-    [...document.querySelectorAll('button')]
-        .filter(b => b.hasAttribute('aria-label'))
-        .forEach(function (b) {
-            if (b.getAttribute('aria-label').toLowerCase().startsWith('attach files')) {
-                result = b.disabled;
-            }
-        })
-
-    return result;
-})
-
-if (attachDisabled) {
-    await page.close();
-    await browser.disconnect();
-
-    // Postponed (Attaching files is not available)
-    process.exit(-1);
-}
-
 let textarea = await page.$('textarea');
 
 if (textarea) {
@@ -254,7 +327,7 @@ try {
     console.log('Waiting for the stop streaming button to disappear...');
     await page.waitForFunction(
         (sel) => !document.querySelector(sel),
-        { timeout: 60000 }, // Timeout in milliseconds
+        {timeout: 60000}, // Timeout in milliseconds
         'button[data-testid="stop-button"]'
     );
     console.log('Button disappeared');
@@ -263,7 +336,7 @@ try {
 }
 
 try {
-    await page.waitForNetworkIdle({ timeout: 10000 });
+    await page.waitForNetworkIdle({timeout: 10000});
 } catch (Error) {
     //
 }
