@@ -47,6 +47,10 @@ async function postCallback(protocol, host, port, path, json) {
         },
     };
 
+    if (!json['try_after']) {
+        json['try_after'] = (new Date()).toISOString();
+    }
+
     const data = JSON.stringify(json);
 
 
@@ -100,15 +104,6 @@ const host = options['host'] ?? '127.0.0.1';
 const hostPort = options['port'] ?? 8000;
 const callbackPath = options['callback-path'] ?? '/api/puppeteer/callback';
 
-const response = await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
-    'status': 'Missing Args',
-    'file_id': Number.parseInt(fileId),
-    'username': username,
-    'language': language,
-})
-
-console.log(response);
-
 if (!username || !password || !language || !fileId || !filePath || !debuggerPort || !callbackPath) {
     if (callbackPath) {
         const response = await postCallback(protocol, host, hostPort, callbackPath, {
@@ -121,14 +116,18 @@ if (!username || !password || !language || !fileId || !filePath || !debuggerPort
         console.log(response);
     }
 
-    // status: 'Missing Args'
     process.exit(-15);
 }
 
 const wsUrl = await getWebSocketURL(debuggerPort);
 
 if (!wsUrl) {
-    // status: 'No Browser'
+    await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+        'status': 'No Browser',
+        'file_id': Number.parseInt(fileId),
+        'username': username,
+        'language': language,
+    })
 
     process.exit(-20);
 }
@@ -469,7 +468,14 @@ if (attachButton) {
         await page.close();
         await browser.disconnect();
 
-        // status: 'Try After'
+        await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+            'status': 'Try After',
+            'file_id': Number.parseInt(fileId),
+            'username': username,
+            'language': language,
+            'tried_at': now,
+            'try_after': tryAfter,
+        })
 
         // postponed
         process.exit(-5);
@@ -494,8 +500,12 @@ if (attachDisabled) {
     await page.close();
     await browser.disconnect();
 
-    // status: 'No Upload'
-
+    await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+        'status': 'No Upload',
+        'file_id': Number.parseInt(fileId),
+        'username': username,
+        'language': language,
+    })
     // Postponed (Attaching files is not available)
     process.exit(-1);
 }
@@ -530,8 +540,14 @@ try {
     );
     console.log('Button disappeared');
 } catch (error) {
-    // status: 'Timed Out'
     console.error('Button did not disappear within the timeout', error);
+
+    await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+        'status': 'Timed Out',
+        'file_id': Number.parseInt(fileId),
+        'username': username,
+        'language': language,
+    })
 }
 
 try {
@@ -552,22 +568,41 @@ if (jsonElement) {
         // Parse the JSON string into an object
         const jsonData = JSON.parse(jsonString);
         console.log('Parsed JSON:', jsonData);
+
+        await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+            'status': 'Success',
+            'file_id': Number.parseInt(fileId),
+            'username': username,
+            'language': language,
+            'payload': jsonData,
+        })
     } catch (error) {
         console.error('Failed to parse JSON:', error);
 
         await page.close();
         await browser.disconnect();
 
-        // status: 'Parsing Fail'
+        await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+            'status': 'Parsing Fail',
+            'file_id': Number.parseInt(fileId),
+            'username': username,
+            'language': language,
+        })
+
         process.exit(-2);
     }
 } else {
     console.log('JSON element not found');
 
-    // status: 'No Json'
+    await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
+        'status': 'No Json',
+        'file_id': Number.parseInt(fileId),
+        'username': username,
+        'language': language,
+    })
+
     process.exit(-3);
 }
 
-// status: 'Success'
 await page.close();
 await browser.disconnect();

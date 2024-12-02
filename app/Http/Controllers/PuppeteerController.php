@@ -12,6 +12,7 @@ use App\Providers\MorphServiceProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Throwable;
 
 /**
  * Class PuppeteerController.
@@ -73,6 +74,8 @@ class PuppeteerController extends Controller
         }
 
         $result->metadata = (object) $request->all();
+
+        $result->save();
 
         return response()->json(['message' => 'OK']);
     }

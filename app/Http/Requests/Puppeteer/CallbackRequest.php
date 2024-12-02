@@ -55,10 +55,10 @@ class CallbackRequest extends FormRequest
                 'nullable',
                 'date',
             ],
-            'try_again_at' => [
+            'try_after' => [
                 'sometimes',
                 'nullable',
-                'date',
+                'string',
             ],
         ];
     }
