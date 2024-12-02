@@ -2,25 +2,21 @@ import puppeteer from 'puppeteer';
 import PuppeteerExtra from "puppeteer-extra";
 import Stealth from "puppeteer-extra-plugin-stealth";
 
-async function findButton(page, text) {
-    return await page.evaluateHandle(() => {
-        return Array.from(document.querySelectorAll('button'))
-            .find(btn => btn.textContent.startsWith(text));
-    });
-}
-
 PuppeteerExtra.use(Stealth());
 
 // Launch the browser and open a new blank page
 const browser = await puppeteer.connect({
-    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/7baa8501-e50d-42e0-bd82-cc8f86b5df2a'
+    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/12aabb57-5a57-45a0-8224-92243e88fa8e'
 });
 const page = await browser.newPage();
+
+// logout: https://chatgpt.com/auth/logout
 
 // Navigate the page to a URL.
 await page.goto('https://chatgpt.com');
 await page.setViewport({width: 1080, height: 1024});
 
+// Wait until everything loads.
 await page.waitForNetworkIdle();
 
 let profileButton = await page.$('[data-testid="profile-button"]');
@@ -80,7 +76,6 @@ if (profileButton) {
 
     if (passwordInput) {
         console.log('there is a password input');
-        // passwordInput.value = 'xzymaNjaVeV2GaP';
         await passwordInput.type('xzymaNjaVeV2GaP');
         passwordInput = null;
     }
@@ -98,7 +93,12 @@ if (profileButton) {
         logInButton = null;
 
         console.log('clicked log in button');
-        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+
+        try {
+            await page.waitForNetworkIdle({ timeout: 10000 });
+        } catch (Error) {
+            //
+        }
     } else {
         console.log('there is no log in button');
     }
@@ -113,9 +113,19 @@ if (profileButton) {
     console.log('is not logged in');
 }
 
-let fileInput = await page.$('input[type=file]');
+let gettingStarted = await page.$('[data-testid="getting-started-button"]')
 
-console.log({fileInput})
+if (gettingStarted) {
+    console.log('closing getting started modal');
+
+    await gettingStarted.click();
+    gettingStarted = null;
+
+    await page.keyboard.down('Enter');
+    await page.keyboard.up('Enter');
+}
+
+let fileInput = await page.$('input[type=file]');
 
 if (fileInput) {
     console.log('there is a file input');
@@ -144,8 +154,7 @@ if (fileInput) {
         console.log('The file input is disabled');
     }
 
-    // await fileInput.uploadFile('/var/www/meal-to-feel-api/resources/puppeteer/screenshots/fruit-salad.jpg');
-    // google-chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=/tmp/chrome-instance;
+    await fileInput.uploadFile('/var/www/meal-to-feel-api/resources/puppeteer/screenshots/fruit-salad.jpg');
 } else {
     console.log('there is no file input');
 }
@@ -158,7 +167,7 @@ const attachDisabled = await page.evaluate(() => {
     [...document.querySelectorAll('button')]
         .filter(b => b.hasAttribute('aria-label'))
         .forEach(function (b) {
-            if (b.getAttribute('aria-label').startsWith('Attach files')) {
+            if (b.getAttribute('aria-label').toLowerCase().startsWith('attach files')) {
                 result = b.disabled;
             }
         })
@@ -166,16 +175,22 @@ const attachDisabled = await page.evaluate(() => {
     return result;
 })
 
-await page.waitForNetworkIdle();
+if (attachDisabled) {
+    // await page.close();
+    // await browser.disconnect();
+    //
+    // // Postponed (Attaching files is not available)
+    // process.exit(-1);
+}
 
 let textarea = await page.$('textarea');
 
 if (textarea) {
-    const prompt = 'Here is a photo of the dish. Please estimate calories, nutrients. '
-        + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}. For now just return the JSON example I provided.'
+    const prompt = 'Here is a photo of the dish. Please estimate calories, nutrients.'
+        + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.", "error": "Describe the error (might be no food on photo).","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}.'
+        + ' If there is no photo then for now just return the example JSON. Please respond in language with code: uk.'
         // + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}. For now just return the JSON example I provided.'
-        + '';
-    // + '\n';
+        + '\n';
 
     await textarea.type(prompt);
 }
@@ -184,7 +199,7 @@ try {
     console.log('Waiting for the stop streaming button to disappear...');
     await page.waitForFunction(
         (sel) => !document.querySelector(sel),
-        { timeout: 30000 }, // Timeout in milliseconds
+        { timeout: 60000 }, // Timeout in milliseconds
         'button[data-testid="stop-button"]'
     );
     console.log('Button disappeared');
@@ -192,7 +207,11 @@ try {
     console.error('Button did not disappear within the timeout', error);
 }
 
-await page.waitForNetworkIdle();
+try {
+    await page.waitForNetworkIdle({ timeout: 10000 });
+} catch (Error) {
+    //
+}
 
 const jsonElement = await page.$('code.hljs.language-json');
 
@@ -203,16 +222,22 @@ if (jsonElement) {
     const jsonString = await page.evaluate(element => element.innerText, jsonElement);
 
     try {
-        console.log(jsonString)
-
         // Parse the JSON string into an object
         const jsonData = JSON.parse(jsonString);
         console.log('Parsed JSON:', jsonData);
     } catch (error) {
         console.error('Failed to parse JSON:', error);
+
+        await page.close();
+        await browser.disconnect();
+
+        process.exit(-2);
     }
 } else {
     console.log('JSON element not found');
+
+    process.exit(-3);
 }
 
-// await browser.close();
+await page.close();
+await browser.disconnect();
