@@ -47,8 +47,8 @@ async function postCallback(protocol, host, port, path, json) {
         },
     };
 
-    if (!json['try_after']) {
-        json['try_after'] = (new Date()).toISOString();
+    if (!json['tried_at']) {
+        json['tried_at'] = (new Date()).toISOString();
     }
 
     const data = JSON.stringify(json);
@@ -439,9 +439,7 @@ if (attachButton) {
         }
     }
 
-    const now = await page.evaluate(() => {
-        return (new Date()).toISOString();
-    });
+    const now = (new Date()).toISOString();
 
     const tryAfter = await page.evaluate(() => {
         let result = null;
@@ -465,9 +463,6 @@ if (attachButton) {
         console.log('now: ' + now);
         console.log('try after: ' + tryAfter);
 
-        await page.close();
-        await browser.disconnect();
-
         await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
             'status': 'Try After',
             'file_id': Number.parseInt(fileId),
@@ -476,6 +471,9 @@ if (attachButton) {
             'tried_at': now,
             'try_after': tryAfter,
         })
+
+        await page.close();
+        await browser.disconnect();
 
         // postponed
         process.exit(-5);
@@ -497,15 +495,16 @@ const attachDisabled = await page.evaluate(() => {
 });
 
 if (attachDisabled) {
-    await page.close();
-    await browser.disconnect();
-
     await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
         'status': 'No Upload',
         'file_id': Number.parseInt(fileId),
         'username': username,
         'language': language,
     })
+
+    await page.close();
+    await browser.disconnect();
+
     // Postponed (Attaching files is not available)
     process.exit(-1);
 }
@@ -579,15 +578,15 @@ if (jsonElement) {
     } catch (error) {
         console.error('Failed to parse JSON:', error);
 
-        await page.close();
-        await browser.disconnect();
-
         await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
             'status': 'Parsing Fail',
             'file_id': Number.parseInt(fileId),
             'username': username,
             'language': language,
         })
+
+        await page.close();
+        await browser.disconnect();
 
         process.exit(-2);
     }

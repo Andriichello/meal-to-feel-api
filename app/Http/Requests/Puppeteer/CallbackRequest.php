@@ -53,7 +53,7 @@ class CallbackRequest extends FormRequest
             'tried_at' => [
                 'sometimes',
                 'nullable',
-                'date',
+                'string',
             ],
             'try_after' => [
                 'sometimes',

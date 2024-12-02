@@ -35,16 +35,16 @@ class PuppeteerController extends Controller
         $triedAt = $request->get('tried_at');
         $triedAt = $triedAt ? Carbon::parse($triedAt) : now();
 
-        $tryAgainAt = $request->get('try_again_at');
+        $tryAfter = $request->get('try_after');
 
-        if ($tryAgainAt) {
+        if ($tryAfter) {
             // Parse the "try again at" time (assume it's only the time, e.g., "1:15 PM")
-            $tryAgainAt = Carbon::createFromFormat('g:i A', $tryAgainAt, $triedAt->getTimezone())
+            $tryAfter = Carbon::createFromFormat('g:i A', $tryAfter, $triedAt->getTimezone())
                 ->setDate($triedAt->year, $triedAt->month, $triedAt->day);
 
             // If "try again at" time is earlier than "tried at" time, it's for the next day
-            if ($tryAgainAt->lessThanOrEqualTo($triedAt)) {
-                $tryAgainAt->addDay();
+            if ($tryAfter->lessThanOrEqualTo($triedAt)) {
+                $tryAfter->addDay();
             }
         }
 
@@ -65,7 +65,7 @@ class PuppeteerController extends Controller
         $result->language = $request->get('language') ?? 'en';
         $result->status = $status;
         $result->tried_at = $triedAt;
-        $result->try_again_at = $tryAgainAt;
+        $result->try_again_at = $tryAfter;
 
         $payload = $request->get('payload');
 
