@@ -7,16 +7,13 @@ const args = process.argv.slice(2);
 const username = args[0];
 const password = args[1];
 const filePath = args[2];
+const wsEndpoint = args[3];
 
 PuppeteerExtra.use(Stealth());
 
 // Launch the browser and open a new blank page
-const browser = await puppeteer.connect({
-    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/12aabb57-5a57-45a0-8224-92243e88fa8e'
-});
+const browser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
 const page = await browser.newPage();
-
-// logout: https://chatgpt.com/auth/logout
 
 // Navigate the page to a URL.
 await page.goto('https://chatgpt.com');
