@@ -93,6 +93,8 @@ for (let i = 0; i < args.length; i++) {
     }
 }
 
+console.log({options})
+
 const username = options['username'] ?? null;
 const password = options['password'] ?? null;
 const language = options['language'] ?? 'uk';
@@ -544,7 +546,7 @@ let textarea = await page.$('textarea');
 if (textarea) {
     const prompt = 'Here is a photo of the dish. Please estimate calories, nutrients.'
         + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.", "error": "Describe the error (might be no food on photo).","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}.'
-        + ` Please respond in language with code: ${language ?? 'en'}.`
+        + ` Please respond in language with code: ${language ?? 'en'}. If there is food always estimate it and return JSON (even if there are no ingredients), don't ask for details.`
         // + ' Please respond in JSON format (weight in grams): {"meal": "Name the meal","description":"Describe if meal is healthy or not.","ingredients":[{"name":"Ingredient","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}. For now just return the JSON example I provided.'
         + '\n'; // Newline submits the form
 
@@ -621,7 +623,7 @@ if (jsonElement) {
     console.log('JSON element not found');
 
     await postCallback(protocol, host, Number.parseInt(hostPort), callbackPath, {
-        'status': 'No Json',
+        'status': 'No JSON',
         'file_id': Number.parseInt(fileId),
         'username': username,
         'language': language,
