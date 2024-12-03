@@ -145,6 +145,26 @@ await page.goto('https://chatgpt.com');
 // Wait until everything loads.
 await page.waitForNetworkIdle();
 
+const timezone = await page.evaluate(() => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (error) {
+        //
+    }
+
+    return null;
+});
+
+const now = await page.evaluate(() => {
+    try {
+        return (new Date()).toISOString();
+    } catch (error) {
+        //
+    }
+
+    return null;
+});
+
 let logIn = await page.$('[data-testid="welcome-login-button"]')
     ?? await page.$('[data-testid="login-button"]');
 
@@ -439,8 +459,6 @@ if (attachButton) {
         }
     }
 
-    const now = (new Date()).toISOString();
-
     const tryAfter = await page.evaluate(() => {
         let result = null;
 
@@ -468,6 +486,7 @@ if (attachButton) {
             'file_id': Number.parseInt(fileId),
             'username': username,
             'language': language,
+            'timezone': timezone,
             'tried_at': now,
             'try_after': tryAfter,
         })
@@ -500,6 +519,8 @@ if (attachDisabled) {
         'file_id': Number.parseInt(fileId),
         'username': username,
         'language': language,
+        'timezone': timezone,
+        'tried_at': now,
     })
 
     await page.close();
@@ -546,6 +567,8 @@ try {
         'file_id': Number.parseInt(fileId),
         'username': username,
         'language': language,
+        'timezone': timezone,
+        'tried_at': now,
     })
 }
 
@@ -574,6 +597,8 @@ if (jsonElement) {
             'username': username,
             'language': language,
             'payload': jsonData,
+            'timezone': timezone,
+            'tried_at': now,
         })
     } catch (error) {
         console.error('Failed to parse JSON:', error);
@@ -583,6 +608,8 @@ if (jsonElement) {
             'file_id': Number.parseInt(fileId),
             'username': username,
             'language': language,
+            'timezone': timezone,
+            'tried_at': now,
         })
 
         await page.close();
@@ -598,6 +625,8 @@ if (jsonElement) {
         'file_id': Number.parseInt(fileId),
         'username': username,
         'language': language,
+        'timezone': timezone,
+        'tried_at': now,
     })
 
     process.exit(-3);

@@ -11,7 +11,6 @@ use App\Models\Result;
 use App\Providers\MorphServiceProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Throwable;
 
 /**
@@ -28,8 +27,6 @@ class PuppeteerController extends Controller
      */
     public function callback(CallbackRequest $request): JsonResponse
     {
-        (new ConsoleOutput())->writeln("response: " . json_encode($request->all(), JSON_PRETTY_PRINT));
-
         $status = PuppeteerStatus::tryFrom($request->get('status'));
 
         $triedAt = $request->get('tried_at');
@@ -45,6 +42,20 @@ class PuppeteerController extends Controller
             // If "try again at" time is earlier than "tried at" time, it's for the next day
             if ($tryAfter->lessThanOrEqualTo($triedAt)) {
                 $tryAfter->addDay();
+            }
+
+            $timezone = $request->get('timezone');
+
+            if ($timezone) {
+                try {
+                    $offset = Carbon::now()
+                        ->tz($timezone)
+                        ->getOffset();
+
+                    $tryAfter->subSeconds($offset);
+                } catch (Throwable) {
+                    //
+                }
             }
         }
 

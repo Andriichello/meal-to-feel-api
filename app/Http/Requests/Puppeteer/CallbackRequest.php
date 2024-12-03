@@ -50,6 +50,11 @@ class CallbackRequest extends FormRequest
                 'nullable',
                 'array',
             ],
+            'timezone' => [
+                'sometimes',
+                'nullable',
+                'string',
+            ],
             'tried_at' => [
                 'sometimes',
                 'nullable',
