@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
  * Class Credential.
  *
  * @property int $id
- * @property string $username
+ * @property string $email
  * @property string $password
  * @property Carbon|null $last_used_at
  * @property Carbon|null $try_again_at
@@ -29,7 +29,7 @@ class Credential extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'username',
+        'email',
         'password',
         'last_used_at',
         'try_again_at',

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $credential_id
  * @property int|null $message_id
  * @property int|null $file_id
+ * @property int|null $meal_id
  * @property string $language
  * @property PuppeteerStatus $status
  * @property object|null $payload
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Credential|null $credential
  * @property Message|null $message
  * @property File|null $file
+ * @property Meal|null $meal
  *
  * @method static ResultQuery query()
  */
@@ -42,6 +44,7 @@ class Result extends Model
         'credential_id',
         'message_id',
         'file_id',
+        'meal_id',
         'language',
         'status',
         'payload',
@@ -72,6 +75,7 @@ class Result extends Model
         'credential',
         'message',
         'file',
+        'meal',
     ];
 
     /**
@@ -102,6 +106,16 @@ class Result extends Model
     public function file(): BelongsTo
     {
         return $this->belongsTo(File::class, 'file_id', 'id');
+    }
+
+    /**
+     * Associated meal relation query.
+     *
+     * @return BelongsTo
+     */
+    public function meal(): BelongsTo
+    {
+        return $this->belongsTo(Meal::class, 'meal_id', 'id');
     }
 
     /**

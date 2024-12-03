@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\HasFiles;
+use App\Queries\Models\FlowQuery;
 use App\Queries\Models\MessageQuery;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -79,6 +80,23 @@ class Message extends Model
     public function chat(): BelongsTo
     {
         return $this->belongsTo(Chat::class, 'chat_id', 'unique_id');
+    }
+
+    /**
+     * Associated flows query.
+     *
+     * @return FlowQuery
+     */
+    public function flows(): FlowQuery
+    {
+        return Flow::query()
+            ->where('chat_id', $this->chat_id)
+            ->where('user_id', $this->chat->user_id)
+            ->where('beg_id', '<=', $this->id)
+            ->where(function (FlowQuery $query) {
+                $query->whereNull('end_id')
+                    ->orWhere('end_id', '<=', $this->id);
+            });
     }
 
     /**
