@@ -91,6 +91,7 @@ class AddMeal extends BaseFlow
                         $meal->save();
 
                         $active->status = FlowStatus::Finished;
+                        $active->end_id = $message->unique_id;
                         $active->save();
 
                         $date = ($active->date ?? $active->created_at->format('d.m.Y'));
