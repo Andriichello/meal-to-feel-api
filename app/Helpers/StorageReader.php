@@ -3,7 +3,9 @@
 namespace App\Helpers;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\File\File;
 
 /**
@@ -71,11 +73,33 @@ class StorageReader
      * Get file content as temporary file.
      *
      * @param string $path
+     * @param string|null $name
      *
      * @return resource|null
+     * @throws Exception
      */
-    public function asTempFile(string $path)
+    public function asTempFile(string $path, ?string $name = null)
     {
+        if ($name) {
+            $tempDir = Str::of(sys_get_temp_dir())
+                ->finish('/')
+                ->append(Str::random(4))
+                ->value();
+
+            if (!is_dir($tempDir)) {
+                if (!mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
+                    throw new Exception('Failed to create directory: ' . $tempDir);
+                }
+            }
+
+            $tempPath = $tempDir . '/' . $name;
+
+            $tempFile = fopen($tempPath, 'w+');
+            file_put_contents($tempPath, $this->asStream($path));
+
+            return $tempFile;
+        }
+
         $tempFile = tmpfile();
         $tempPath = stream_get_meta_data($tempFile)['uri'];
 
