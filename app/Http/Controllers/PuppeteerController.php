@@ -6,11 +6,13 @@ use App\Enums\PuppeteerStatus;
 use App\Http\Requests\Puppeteer\CallbackRequest;
 use App\Models\Credential;
 use App\Models\File;
+use App\Models\Meal;
 use App\Models\Message;
 use App\Models\Result;
 use App\Providers\MorphServiceProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Throwable;
 
 /**
@@ -27,6 +29,8 @@ class PuppeteerController extends Controller
      */
     public function callback(CallbackRequest $request): JsonResponse
     {
+        (new ConsoleOutput())->writeln('callback: ' . json_encode($request->all(), JSON_PRETTY_PRINT));
+
         $status = PuppeteerStatus::tryFrom($request->get('status'));
 
         $triedAt = $request->get('tried_at');
@@ -66,12 +70,25 @@ class PuppeteerController extends Controller
         $file = File::query()
             ->find($request->get('file_id'));
 
+        if ($file->context instanceof Message) {
+            $flow = $file->context->flows()
+                ->latest()
+                ->first();
+
+            if ($flow) {
+                $meal = Meal::query()
+                    ->where('flow_id', $flow->id)
+                    ->first();
+            }
+        }
+
         $result = new Result();
 
         $result->credential_id = $credential?->id;
         $result->message_id = $file?->context_type === MorphServiceProvider::slugOf(Message::class)
             ? $file->context_id : null;
         $result->file_id = $file?->id;
+        $result->meal_id = isset($meal) ? $meal->id : null;
 
         $result->language = $request->get('language') ?? 'en';
         $result->status = $status;
