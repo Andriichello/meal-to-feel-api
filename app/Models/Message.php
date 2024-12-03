@@ -92,10 +92,10 @@ class Message extends Model
         return Flow::query()
             ->where('chat_id', $this->chat_id)
             ->where('user_id', $this->chat->user_id)
-            ->where('beg_id', '<=', $this->id)
+            ->where('beg_id', '<=', $this->unique_id)
             ->where(function (FlowQuery $query) {
                 $query->whereNull('end_id')
-                    ->orWhere('end_id', '<=', $this->id);
+                    ->orWhere('end_id', '<=', $this->unique_id);
             });
     }
 
