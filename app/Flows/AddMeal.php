@@ -3,8 +3,10 @@
 namespace App\Flows;
 
 use App\Enums\FlowName;
+use App\Enums\FlowStatus;
 use App\Enums\FlowStep;
 use App\Models\Chat;
+use App\Models\Meal;
 use App\Models\Message;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -64,12 +66,43 @@ class AddMeal extends BaseFlow
                 $active->step = $step->value;
                 $active->save();
 
+                if ($active->step === FlowStep::Cancel->value) {
+                    $active->status = FlowStatus::Finished;
+                    $active->save();
+
+                    $api->sendMessage([
+                        'chat_id' => $chat->unique_id,
+                        'text' => "Your meal entry was cancelled.",
+                        'reply_markup' => $this->markup($chat),
+                    ]);
+                }
+
                 if ($active->step === FlowStep::Save->value) {
                     if ($active?->images()->exists()) {
+                        $meal = new Meal();
+
+                        $meal->user_id = $active->user?->id;
+                        $meal->chat_id = $active->chat?->id;
+                        $meal->flow_id = $active->id;
+
+                        $meal->date = $active->date ?? now()->format('Y-m-d');
+                        $meal->time = $active->time ?? now()->format('H:i');
+
+                        $meal->save();
+
+                        $active->status = FlowStatus::Finished;
+                        $active->save();
+
+                        $date = ($active->date ?? $active->created_at->format('d.m.Y'));
+                        $time = ($active->time ?? $active->created_at->format('H:i'));
+                        $images = $active->images()->count();
+
                         $api->sendMessage([
                             'chat_id' => $chat->unique_id,
-                            'text' => "Your meal\n\n"
-                                . "Date: " . ($active->date ?? $active->created_at->format('d.m.Y')),
+                            'text' => "Your meal was saved\n\n"
+                                . "Date: " . $date . "\n"
+                                . "Time: " . $time . "\n\n"
+                                . "Photos: " . $images,
                             'reply_markup' => $this->markup($chat),
                         ]);
                     } else {
@@ -212,6 +245,14 @@ class AddMeal extends BaseFlow
                 ->row([
                     Keyboard::button('Back'),
                 ]);
+        }
+
+        if (in_array($active->step, [FlowStep::Cancel->value, FlowStep::Save->value])) {
+            $markup->row([
+                Keyboard::button('Add meal'),
+            ]);
+
+            return $markup;
         }
 
         if ($active?->images()->exists()) {
