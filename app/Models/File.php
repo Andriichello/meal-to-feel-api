@@ -17,6 +17,7 @@ use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use stdClass;
 
 /**
  * Class File.
@@ -40,9 +41,12 @@ use Illuminate\Support\Str;
  * @property string $url
  * @property string $folder
  * @property string $full_path
+ * @property int|null $quality
  *
  * @property Model|null $context
  * @property Result[]|Collection $results
+ * @property File[]|Collection $variants
+ * @property File[]|Collection $webps
  *
  * @method static FileQuery query()
  * @method static FileFactory factory(...$parameters)
@@ -88,6 +92,8 @@ class File extends Model
     protected array $relationships = [
         'context',
         'results',
+        'variants',
+        'webps',
     ];
 
     /**
@@ -113,6 +119,31 @@ class File extends Model
     public function results(): HasMany
     {
         return $this->hasMany(Result::class, 'file_id', 'id');
+    }
+
+    /**
+     * Get the variants associated with the model.
+     *
+     * @return HasMany
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(File::class, 'context_id', 'id')
+            ->where('context_type', MorphServiceProvider::slugOf(static::class));
+    }
+
+    /**
+     * Get the WebPs associated with the model.
+     *
+     * @return HasMany
+     */
+    public function webps(): HasMany
+    {
+        return $this->variants()
+            ->where(function (FileQuery $query) {
+                $query->where('type', 'image/webp')
+                    ->orWhere('extension', 'webp');
+            });
     }
 
     /**
@@ -151,6 +182,31 @@ class File extends Model
                 ->append($this->disk_name)
                 ->value(),
         );
+    }
+
+    /**
+     * Get `quality` attribute from `metadata`.
+     *
+     * @return int|null
+     */
+    public function getQualityAttribute(): ?int
+    {
+        return data_get($this->metadata, 'quality');
+    }
+
+    /**
+     * Set `quality` attribute on `metadata`.
+     *
+     * @param int|null $quality
+     *
+     * @return void
+     */
+    public function setQualityAttribute(int|null $quality): void
+    {
+        $metadata = $this->metadata ?? new stdClass();
+        data_set($metadata, 'quality', $quality);
+
+        $this->attributes['metadata'] = json_encode($metadata);
     }
 
     /**
@@ -194,6 +250,18 @@ class File extends Model
             ->append($context->getKey())
             ->finish('/')
             ->value();
+    }
+
+    /**
+     * Get hash for file under given path.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    public static function hash(string $path): string
+    {
+        return md5(md5_file($path) . microtime());
     }
 
     /**

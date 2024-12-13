@@ -6,14 +6,17 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-gd": "*",
         "ext-pdo": "*",
         "guzzlehttp/guzzle": "^7.9",
+        "intervention/image": "^3.9",
         "irazasyed/telegram-bot-sdk": "^3.14",
         "laravel/dusk": "^8.2",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
         "openai-php/laravel": "^0.10.2",
-        "spatie/laravel-google-cloud-storage": "^2.3"
+        "spatie/laravel-google-cloud-storage": "^2.3",
+        "ext-fileinfo": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -25,6 +28,9 @@
         "phpunit/phpunit": "^11.0.1"
     },
     "autoload": {
+        "files": [
+            "app/helpers.php"
+        ],
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",

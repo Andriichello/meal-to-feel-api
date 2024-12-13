@@ -6,6 +6,7 @@ use App\Helpers\StorageReader;
 use App\Helpers\StorageWriter;
 use App\Models\File as FileModel;
 use Exception;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
@@ -160,5 +161,51 @@ class FileRepository
         );
 
         return $model->save();
+    }
+
+    /**
+     * @param FileModel $original
+     * @param mixed $variant
+     *
+     * @return FileModel
+     * @throws FileNotFoundException|Exception
+     */
+    public function createVariant(FileModel $original, mixed $variant): FileModel
+    {
+        $attributes = [
+            'file' => $variant,
+            'context' => $original,
+            'disk' => $original->disk,
+            'disk_name' => Str::of($original->disk_name)
+                ->beforeLast('.')
+                ->append('_' . Str::random(4))
+                ->value(),
+        ];
+
+        if (is_resource($variant)) {
+            $attributes['type'] = mime_content_type(pathOf($variant));
+            $attributes['extension'] = extensionOfMime($attributes['type']);
+            $attributes['disk_name'] .= '.' . $attributes['extension'];
+        }
+
+        if ($variant instanceof File || $variant instanceof UploadedFile) {
+            $attributes['type'] = mime_content_type($variant->getPathname());
+            $attributes['extension'] = extensionOfMime($attributes['type']);
+            $attributes['disk_name'] .= '.' . $attributes['extension'];
+        }
+
+        $attributes['disk_path'] = Str::of($original->folder)
+            ->finish('/')
+            ->append($attributes['disk_name'])
+            ->value();
+
+        $file = $this->create($attributes, true);
+
+        if (empty($file->size)) {
+            $file->size = data_get($file, 'metadata.size');
+            $file->save();
+        }
+
+        return $file;
     }
 }

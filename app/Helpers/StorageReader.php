@@ -101,7 +101,7 @@ class StorageReader
         }
 
         $tempFile = tmpfile();
-        $tempPath = stream_get_meta_data($tempFile)['uri'];
+        $tempPath = pathOf($tempFile);
 
         file_put_contents($tempPath, $this->asStream($path));
 

@@ -59,7 +59,7 @@ class StorageWriter
     public function hash(mixed $content): string
     {
         if (is_resource($content)) {
-            $path = stream_get_meta_data($content)['uri'];
+            $path = pathOf($content);
             return md5_file($path);
         }
 

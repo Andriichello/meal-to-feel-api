@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Helpers\StorageReader;
 use App\Models\Credential;
 use App\Models\File;
-use App\Models\Flow;
 use App\Models\Message;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
@@ -86,7 +85,7 @@ class ProcessPhoto implements ShouldQueue
             $tempFile = $reader->asTempFile($file->full_path, $file->disk_name);
 
             if (is_resource($tempFile)) {
-                $tempPath = stream_get_meta_data($tempFile)['uri'];
+                $tempPath = pathOf($tempFile);
 
                 $command = [
                     'node',
