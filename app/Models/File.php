@@ -7,8 +7,10 @@ use App\Queries\Models\FileQuery;
 use Database\Factories\FileFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
@@ -40,6 +42,7 @@ use Illuminate\Support\Str;
  * @property string $full_path
  *
  * @property Model|null $context
+ * @property Result[]|Collection $results
  *
  * @method static FileQuery query()
  * @method static FileFactory factory(...$parameters)
@@ -84,6 +87,7 @@ class File extends Model
      */
     protected array $relationships = [
         'context',
+        'results',
     ];
 
     /**
@@ -99,6 +103,16 @@ class File extends Model
             'context_id',
             'id'
         );
+    }
+
+    /**
+     * Associated results relation query.
+     *
+     * @return HasMany
+     */
+    public function results(): HasMany
+    {
+        return $this->hasMany(Result::class, 'file_id', 'id');
     }
 
     /**
