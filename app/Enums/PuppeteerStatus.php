@@ -16,4 +16,9 @@ enum PuppeteerStatus: string
     case TimedOut = 'Timed Out';
     case ParsingFail = 'Parsing Fail';
     case NoJSON = 'No JSON';
+    case FileIsTooBig = 'File Is Too Big';
+    case NoChoices = 'No Choices';
+    case Unrecognized = 'Unrecognized';
+    case Exception = 'Exception';
+    case Nothing = 'Nothing';
 }

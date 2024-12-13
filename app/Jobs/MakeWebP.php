@@ -62,15 +62,15 @@ class MakeWebP implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return void
+     * @return File
      * @throws Exception|FileNotFoundException
      */
-    public function handle(): void
+    public function handle(): File
     {
         $media = $this->media;
 
         if (!$this->force && $media->webps()->exists()) {
-            return;
+            return $media->webps()->first();
         }
 
         $reader = new StorageReader($media->disk);
@@ -107,5 +107,7 @@ class MakeWebP implements ShouldQueue
 
         $webp->quality = $quality;
         $webp->save();
+
+        return $webp;
     }
 }
