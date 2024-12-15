@@ -13,4 +13,5 @@ enum ResultStatus: string
     case Unrecognized = 'Unrecognized';
     case Exception = 'Exception';
     case Nothing = 'Nothing';
+    case Ignored = 'Ignored';
 }
