@@ -16,9 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable();
             $table->foreignId('chat_id')->nullable();
             $table->foreignId('flow_id')->nullable();
+            $table->string('status')->nullable();
             $table->date('date');
             $table->time('time');
             $table->json('metadata')->nullable();
+            $table->timestamp('notified_at')->nullable();
+            $table->timestamp('processed_at')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')
