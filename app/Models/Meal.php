@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MealStatus;
 use App\Queries\Models\MealQuery;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,9 +18,12 @@ use Illuminate\Support\Collection;
  * @property int|null $user_id
  * @property int|null $chat_id
  * @property int|null $flow_id
+ * @property MealStatus $status
  * @property string $date
  * @property string $time
  * @property object|null $metadata
+ * @property Carbon|null $notified_at
+ * @property Carbon|null $processed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -41,9 +45,12 @@ class Meal extends Model
         'user_id',
         'chat_id',
         'flow_id',
+        'status',
         'date',
         'time',
         'metadata',
+        'notified_at',
+        'performed_at',
     ];
 
     /**
@@ -54,7 +61,10 @@ class Meal extends Model
     protected $casts = [
         'date' => 'datetime',
         'time' => 'datetime',
+        'status' => MealStatus::class,
         'metadata' => 'object',
+        'notified_at' => 'datetime',
+        'performed_at' => 'datetime',
     ];
 
     /**

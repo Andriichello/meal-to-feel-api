@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\OneOfEnums;
 use App\Enums\PuppeteerStatus;
+use App\Enums\ResultStatus;
 use App\Queries\Models\ResultQuery;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $file_id
  * @property int|null $meal_id
  * @property string $language
- * @property PuppeteerStatus $status
+ * @property ResultStatus|PuppeteerStatus $status
  * @property object|null $payload
  * @property object|null $metadata
  * @property Carbon $tried_at
@@ -59,7 +61,8 @@ class Result extends Model
      * @var array
      */
     protected $casts = [
-        'status' => PuppeteerStatus::class,
+        'status' => OneOfEnums::class . ':'
+            . ResultStatus::class . ','. PuppeteerStatus::class,
         'payload' => 'object',
         'metadata' => 'object',
         'tried_at' => 'datetime',
