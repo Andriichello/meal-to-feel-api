@@ -28,7 +28,12 @@ class ResultObserver
         }
 
         try {
-            (new NotifyAboutResult($result))->handle();
+            if (empty($result->notified_at)) {
+                (new NotifyAboutResult($result))->handle();
+
+                $result->notified_at = now();
+                $result->save();
+            }
         } catch (Throwable) {
             //
         }

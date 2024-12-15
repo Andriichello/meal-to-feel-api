@@ -37,7 +37,7 @@ class MessageComposer
      *
      * @param Result $result
      *
-     * @return array{photo: ?string, text: string}
+     * @return array{chat_id: int, photo: ?string, text: string}
      */
     public static function result(Result $result): array
     {
@@ -124,6 +124,10 @@ class MessageComposer
             $message .= "\n*Totals:*\n" . $totalsFormatted . "\n";
         }
 
-        return ['photo' => $result->file?->file_id, 'text' => $message];
+        return [
+            'chat_id' => $result->message->chat_id,
+            'photo' => $result->file?->file_id,
+            'text' => $message
+        ];
     }
 }

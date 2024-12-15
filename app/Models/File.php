@@ -42,6 +42,7 @@ use stdClass;
  * @property string $folder
  * @property string $full_path
  * @property int|null $quality
+ * @property string|null $exception
  *
  * @property Model|null $context
  * @property Result[]|Collection $results
@@ -207,6 +208,42 @@ class File extends Model
         data_set($metadata, 'quality', $quality);
 
         $this->attributes['metadata'] = json_encode($metadata);
+    }
+
+    /**
+     * Get `exception` attribute from `metadata`.
+     *
+     * @return string|null
+     */
+    public function getExceptionAttribute(): ?string
+    {
+        return data_get($this->metadata, 'exception');
+    }
+
+    /**
+     * Set `exception` attribute on `metadata`.
+     *
+     * @param string|null $exception
+     *
+     * @return void
+     */
+    public function setExceptionAttribute(string|null $exception): void
+    {
+        $metadata = $this->metadata ?? new stdClass();
+        data_set($metadata, 'exception', $exception);
+
+        $this->attributes['metadata'] = json_encode($metadata);
+    }
+
+    /**
+     * Determines if current file is an image.
+     *
+     * @return bool
+     */
+    public function isImage(): bool
+    {
+        return Str::of($this->type ?? '')
+            ->startsWith(['image/', 'photo']);
     }
 
     /**

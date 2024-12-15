@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
+use stdClass;
 
 /**
  * Class Result.
@@ -27,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $try_again_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ *
+ * @property Carbon|null $notified_at
  *
  * @property Credential|null $credential
  * @property Message|null $message
@@ -119,6 +122,33 @@ class Result extends Model
     public function meal(): BelongsTo
     {
         return $this->belongsTo(Meal::class, 'meal_id', 'id');
+    }
+
+    /**
+     * Get `notified_at` attribute from `metadata`.
+     *
+     * @return Carbon|null
+     */
+    public function getNotifiedAtAttribute(): ?Carbon
+    {
+        $value = data_get($this->metadata, 'notified_at');
+
+        return empty($value) ? null : Carbon::parse($value);
+    }
+
+    /**
+     * Set `notified_at` attribute on `metadata`.
+     *
+     * @param Carbon|null $notifiedAt
+     *
+     * @return void
+     */
+    public function setNotifiedAtAttribute(Carbon|null $notifiedAt): void
+    {
+        $metadata = $this->metadata ?? new stdClass();
+        data_set($metadata, 'notified_at', $notifiedAt);
+
+        $this->attributes['metadata'] = json_encode($metadata);
     }
 
     /**

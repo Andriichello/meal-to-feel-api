@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\File;
 use App\Models\Result;
+use App\Observers\FileObserver;
 use App\Observers\ResultObserver;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        File::observe(FileObserver::class);
         Result::observe(ResultObserver::class);
     }
 }
