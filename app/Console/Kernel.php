@@ -19,6 +19,9 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('dispatch:process-photo')
         //    ->everyFiveMinutes();
+
+         $schedule->command('dispatch:process-photo-via-api')
+            ->everyMinute();
     }
 
     /**

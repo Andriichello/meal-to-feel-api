@@ -3,10 +3,8 @@
 namespace App\Console\Commands;
 
 
-use App\Enums\PuppeteerStatus;
 use App\Enums\ResultStatus;
-use App\Jobs\ProcessPhoto;
-use App\Models\Credential;
+use App\Jobs\ProcessPhotoViaApi;
 use App\Models\File;
 use App\Models\Message;
 use App\Queries\Models\FileQuery;
@@ -14,23 +12,23 @@ use App\Queries\Models\ResultQuery;
 use Illuminate\Console\Command;
 
 /**
- * Class DispatchProcessPhoto.
+ * Class DispatchProcessPhotoViaApi.
  */
-class DispatchProcessPhoto extends Command
+class DispatchProcessPhotoViaApi extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'dispatch:process-photo {--limit=3}';
+    protected $signature = 'dispatch:process-photo-via-api {--limit=3}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Dispatches ProcessPhoto jobs'
+    protected $description = 'Dispatches ProcessPhotoViaApi jobs'
         . ' if there are unprocessed photos.';
 
     /**
@@ -45,7 +43,7 @@ class DispatchProcessPhoto extends Command
             ->whereNotNull('context_id')
             ->images()
             ->whereDoesntHave('results', function (ResultQuery $q) {
-                $q->withStatus(...PuppeteerStatus::cases());
+                $q->withStatus(...ResultStatus::cases());
             });
     }
 
@@ -60,17 +58,12 @@ class DispatchProcessPhoto extends Command
 
         $counter = 0;
 
-        $credential = Credential::query()
-            ->orderBy(['try_again_at', 'last_used_at'])
-            ->firstOrFail();
-
         $this->query()
-            ->orderByDesc('updated_at')
             ->each(
-                function (File $file) use (&$counter, $limit, $credential) {
-                    $job = new ProcessPhoto($file->id, $credential->id);
+                function (File $file) use (&$counter, $limit) {
+                    $job = new ProcessPhotoViaApi($file->id);
 
-                    dispatch($job)->delay(10);
+                    dispatch($job);
                     $counter++;
 
                     // breaks out of querying (if false)
