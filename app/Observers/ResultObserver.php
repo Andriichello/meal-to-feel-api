@@ -2,9 +2,11 @@
 
 namespace App\Observers;
 
+use App\Jobs\NotifyAboutResult;
 use App\Models\Credential;
 use App\Models\Result;
 use Illuminate\Support\Carbon;
+use Throwable;
 
 /**
  * Class ResultObserver.
@@ -23,6 +25,12 @@ class ResultObserver
             $this->fillTryAgainAt($credential, $result->try_again_at);
 
             $credential->save();
+        }
+
+        try {
+            (new NotifyAboutResult($result))->handle();
+        } catch (Throwable) {
+            //
         }
     }
 
