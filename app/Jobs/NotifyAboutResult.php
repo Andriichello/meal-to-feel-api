@@ -62,18 +62,18 @@ class NotifyAboutResult implements ShouldQueue
 
         if (empty($message['photo'])) {
             Telegram::bot()
+                ->sendMessage([
+                    'chat_id' => $message['chat_id'],
+                    'text' => $message['text'],
+                    'parse_mode' => $message['parse_mode'],
+                ]);
+        } else {
+            Telegram::bot()
                 ->sendPhoto([
                     'chat_id' => $message['chat_id'],
                     'photo' => $message['photo'],
                     'caption' => $message['text'],
-                    'parse_mode' => 'MarkdownV2',
-                ]);
-        } else {
-            Telegram::bot()
-                ->sendMessage([
-                    'chat_id' => $message['chat_id'],
-                    'text' => $message['text'],
-                    'parse_mode' => 'MarkdownV2',
+                    'parse_mode' => $message['parse_mode'],
                 ]);
         }
 

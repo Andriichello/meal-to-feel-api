@@ -10,7 +10,6 @@ use App\Models\Result;
  */
 class MessageComposer
 {
-
     /**
      * Escape special characters with a backslash.
      *
@@ -37,7 +36,7 @@ class MessageComposer
      *
      * @param Result $result
      *
-     * @return array{chat_id: int, photo: ?string, text: string}
+     * @return array{chat_id: int, photo: ?string, text: string, parse_mode: string}
      */
     public static function result(Result $result): array
     {
@@ -127,7 +126,8 @@ class MessageComposer
         return [
             'chat_id' => $result->message->chat_id,
             'photo' => $result->file?->file_id,
-            'text' => $message
+            'text' => $message,
+            'parse_mode' => 'MarkdownV2',
         ];
     }
 }

@@ -6,7 +6,9 @@ use App\Jobs\NotifyAboutResult;
 use App\Jobs\ProcessPhotoViaApi;
 use App\Models\Credential;
 use App\Models\File;
+use App\Models\Message;
 use App\Models\Result;
+use App\Providers\MorphServiceProvider;
 use Illuminate\Support\Carbon;
 use Throwable;
 
@@ -20,15 +22,27 @@ class FileObserver
      */
     public function saved(File $file): void
     {
-        // if (!$file->isImage() || !empty($file->exception) || $file->results()->exists()) {
-        //     return;
-        // }
+        if (!$file->isImage()) {
+            return;
+        }
 
-        // try {
-        //     (new ProcessPhotoViaApi($file->id))->handle();
-        // } catch (Throwable $e) {
-        //     $file->exception = $e->getMessage();
-        //     $file->save();
-        // }
+        if (!empty($file->exception)) {
+            return;
+        }
+
+        if ($file->context_type !== MorphServiceProvider::slugOf(Message::class)) {
+            return;
+        }
+
+         if ($file->results()->exists()) {
+             return;
+         }
+
+         try {
+             dispatch(new ProcessPhotoViaApi($file->id));
+         } catch (Throwable $e) {
+             $file->exception = $e->getMessage();
+             $file->save();
+         }
     }
 }

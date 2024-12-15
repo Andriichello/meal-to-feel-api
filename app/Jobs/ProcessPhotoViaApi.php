@@ -3,24 +3,25 @@
 namespace App\Jobs;
 
 use App\Enums\ResultStatus;
+use App\Helpers\VisionApiHelper;
 use App\Models\File;
 use App\Models\Meal;
 use App\Models\Message;
 use App\Models\Result;
 use Exception;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
-use OpenAI\Laravel\Facades\OpenAI;
 use Throwable;
 
 /**
  * Class ProcessPhotoViaApi.
  */
-class ProcessPhotoViaApi implements ShouldQueue
+class ProcessPhotoViaApi implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -46,6 +47,14 @@ class ProcessPhotoViaApi implements ShouldQueue
      * @var int
      */
     protected int $fileId;
+
+    /**
+     * @return string
+     */
+    public function uniqueId(): string
+    {
+        return md5('file-id=' . $this->fileId);
+    }
 
     /**
      * ProcessPhotoViaApi's constructor
@@ -74,6 +83,7 @@ class ProcessPhotoViaApi implements ShouldQueue
         $result = new Result();
 
         $result->file_id = $file?->id;
+        $result->language = 'en';
         $result->tried_at = now();
 
         if ($context instanceof Message) {
@@ -111,29 +121,18 @@ class ProcessPhotoViaApi implements ShouldQueue
                 }
             }
 
-            $json = '{"meal": "Name the meal","description":"Describe if meal is healthy or not.", "error": "Describe the error (might be no food on photo) or null here.","ingredients":[{"name":"Ingredient","name_en": "Ingredient name in English","serving_size":"1 medium sized","weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}],"total":{"weight":130.5,"calories":62,"carbohydrates":15.4,"fiber":3.1,"sugar":12.2,"protein":1.2,"fat":0.2}}';
+            try {
+                $response = VisionApiHelper::estimate($webp->url, $result->language);
+                $result->metadata = (object) ['response' => $response->toArray()];
+            } catch (Throwable $e) {
+                $result->status = ResultStatus::Exception;
+                $result->metadata = (object) [
+                    'exception' => $e->getMessage(),
+                    ...((array) $result->metadata),
+                ];
 
-            $text = "Here is a photo of the dish. Please estimate calories, nutrients."
-                . " Please respond in JSON format (weight in grams): {$json}."
-                . " Please respond in language with code: {$result->language}."
-                . " If there is food always estimate it and return JSON (even if there are no ingredients), don't ask for details.";
-
-            $response = OpenAI::chat()
-                ->create([
-                    'model' => 'gpt-4o-mini',
-                    'messages' => [
-                        [
-                            'role' => 'user',
-                            'content' => [
-                                ['type' => 'text', 'text' => $text],
-                                ['type' => 'image_url', 'image_url' => ['url' => $webp->url]],
-                            ],
-                        ],
-                    ],
-                    'max_tokens' => 15000,
-                ]);
-
-            $result->metadata = (object) ['response' => $response->toArray()];
+                return;
+            }
 
             if (empty($response->choices)) {
                 $result->status = ResultStatus::NoChoices;
