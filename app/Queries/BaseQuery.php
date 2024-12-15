@@ -21,9 +21,6 @@ use Illuminate\Database\Query\JoinClause;
  * @method Model make(array $attributes = [])
  * @method Model create(array $attributes = [])
  * @method Model updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class BaseQuery extends EloquentBuilder
 {

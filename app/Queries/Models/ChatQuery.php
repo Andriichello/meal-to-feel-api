@@ -20,9 +20,6 @@ use App\Queries\BaseQuery;
  * @method Chat make(array $attributes = [])
  * @method Chat create(array $attributes = [])
  * @method Chat updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class ChatQuery extends BaseQuery
 {

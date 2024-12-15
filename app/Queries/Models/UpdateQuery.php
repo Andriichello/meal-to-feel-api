@@ -20,9 +20,6 @@ use App\Queries\BaseQuery;
  * @method Update make(array $attributes = [])
  * @method Update create(array $attributes = [])
  * @method Update updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class UpdateQuery extends BaseQuery
 {

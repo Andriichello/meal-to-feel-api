@@ -3,8 +3,11 @@
 namespace App\Queries\Models;
 
 use App\Enums\PuppeteerStatus;
+use App\Enums\ResultStatus;
 use App\Models\Result;
 use App\Queries\BaseQuery;
+use App\Queries\Traits\WithStatus;
+use BackedEnum;
 
 /**
  * Class ResultQuery.
@@ -22,33 +25,20 @@ use App\Queries\BaseQuery;
  * @method Result create(array $attributes = [])
  * @method Result updateOrCreate(array $attributes, array $values = [])
  *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
+ * @method ResultQuery withStatus(BackedEnum ...$enum)
  */
 class ResultQuery extends BaseQuery
 {
-    /**
-     * Filter down to results that have been successful.
-     *
-     * @return $this
-     */
-    public function successful(): static
-    {
-        $this->where('status', PuppeteerStatus::Success->value);
-
-        return $this;
-    }
+    use WithStatus;
 
     /**
-     * Filter down to results that have failed.
+     * Filter down to results that have been processed.
      *
-     * @return $this
+     * @return static
      */
-    public function failed(): static
+    public function processed(): static
     {
-        $this->whereNot(function (ResultQuery $query) {
-            $query->successful();
-        });
+        $this->where('status', ResultStatus::Processed->value);
 
         return $this;
     }

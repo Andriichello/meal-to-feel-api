@@ -4,6 +4,8 @@ namespace App\Queries\Models;
 
 use App\Models\Meal;
 use App\Queries\BaseQuery;
+use App\Queries\Traits\WithStatus;
+use BackedEnum;
 
 /**
  * Class MealQuery.
@@ -21,10 +23,9 @@ use App\Queries\BaseQuery;
  * @method Meal create(array $attributes = [])
  * @method Meal updateOrCreate(array $attributes, array $values = [])
  *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
+ * @method ResultQuery withStatus(BackedEnum ...$enum)
  */
 class MealQuery extends BaseQuery
 {
-    //
+    use WithStatus;
 }

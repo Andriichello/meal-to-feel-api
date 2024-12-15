@@ -22,9 +22,6 @@ use Illuminate\Database\Query\Builder;
  * @method Flow make(array $attributes = [])
  * @method Flow create(array $attributes = [])
  * @method Flow updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class FlowQuery extends BaseQuery
 {

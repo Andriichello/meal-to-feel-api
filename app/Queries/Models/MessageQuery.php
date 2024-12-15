@@ -20,9 +20,6 @@ use App\Queries\BaseQuery;
  * @method Message make(array $attributes = [])
  * @method Message create(array $attributes = [])
  * @method Message updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class MessageQuery extends BaseQuery
 {

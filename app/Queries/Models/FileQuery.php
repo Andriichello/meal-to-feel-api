@@ -26,9 +26,6 @@ use Illuminate\Support\Arr;
  * @method File make(array $attributes = [])
  * @method File create(array $attributes = [])
  * @method File updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class FileQuery extends BaseQuery
 {
@@ -75,6 +72,21 @@ class FileQuery extends BaseQuery
         if (is_array($id) || is_scalar($id)) {
             $this->whereIn('context_id', Arr::wrap($id));
         }
+
+        return $this;
+    }
+
+    /**
+     * Filter down to image files (based on `type`).
+     *
+     * @return static
+     */
+    public function images(): static
+    {
+        $this->where(function (FileQuery $q) {
+            $q->whereLike('type', 'image/%')
+                ->orWhereLike('type', 'photo%');
+        });
 
         return $this;
     }

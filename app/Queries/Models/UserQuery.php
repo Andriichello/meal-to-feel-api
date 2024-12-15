@@ -21,9 +21,6 @@ use Illuminate\Database\Eloquent\Builder;
  * @method User make(array $attributes = [])
  * @method User create(array $attributes = [])
  * @method User updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class UserQuery extends BaseQuery
 {

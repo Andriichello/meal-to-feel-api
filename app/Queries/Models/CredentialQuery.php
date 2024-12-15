@@ -20,9 +20,6 @@ use App\Queries\BaseQuery;
  * @method Credential make(array $attributes = [])
  * @method Credential create(array $attributes = [])
  * @method Credential updateOrCreate(array $attributes, array $values = [])
- *
- * @author Andrii Prykhodko <andriichello@gmail.com>
- * @package Speedgoat\Skeleton\Queries
  */
 class CredentialQuery extends BaseQuery
 {
