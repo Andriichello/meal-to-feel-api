@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Helpers;
+
+use App\Enums\ResultStatus;
+use App\Models\Result;
+
+/**
+ * Class MessageComposer.
+ */
+class MessageComposer
+{
+
+    /**
+     * Escape special characters with a backslash.
+     *
+     * @param string|null $string
+     * @param array|null $search
+     * @param array|null $replace
+     *
+     * @return string|null
+     */
+    public static function escape(
+        ?string $string,
+        ?array $search = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'],
+        ?array $replace = ['\_', '\*', '\[', '\]', '\(', '\)', '\~', '\`', '\>', '\#', '\+', '\-', '\=', '\|', '\{', '\}', '\.', '\!']
+    ): ?string {
+        if (empty($string)) {
+            return $string;
+        }
+
+        return (string) str_replace($search, $replace, $string);
+    }
+
+    /**
+     * Compose a message about the dish estimation result.
+     *
+     * @param Result $result
+     *
+     * @return array{photo: ?string, text: string}
+     */
+    public static function result(Result $result): array
+    {
+        $errorStatus = "❌ *Failed to process image*";
+
+        if ($result->status === ResultStatus::FileIsTooBig) {
+            $errorStatus = "❌ *Photo is too big*";
+        }
+
+        if ($result->status === ResultStatus::Unrecognized) {
+            $errorStatus = "❌ *Failed to recognize meal*";
+        }
+
+        if ($result->status === ResultStatus::Processed) {
+            $payload = $result->payload;
+
+            if ($payload) {
+                $title = data_get($payload, 'meal');
+                $description = data_get($payload, 'description');
+                $error = data_get($payload, 'error');
+
+                if (!empty($error)) {
+                    $error = static::escape($error);
+                }
+
+                $errorStatus = empty($error)
+                    ? "✅ *Processed*"
+                    : "❌ *$error*";
+
+                $total = data_get($payload, 'total');
+
+                if (!empty($total)) {
+                    $totalsFormatted = "";
+
+                    $value = data_get($total, 'weight');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Weight:* " . static::escape(sprintf("%dg", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'calories');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Calories:* " . static::escape(sprintf("%d kcal", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'carbohydrates');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Carbohydrates:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'fiber');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Fiber:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'sugar');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Sugar:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'protein');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Protein:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+                    }
+
+                    $value = data_get($total, 'fat');
+                    if (!empty($value)) {
+                        $totalsFormatted .= "• *Fat:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+                    }
+                }
+            }
+        }
+
+        $message = $errorStatus . "\n\n";
+
+        if (!empty($title)) {
+            $message .= "*Meal:* " . static::escape($title) . "\n";
+        }
+
+        if (!empty($description)) {
+            $message .= "*Description:* " . static::escape($description) . "\n";
+        }
+
+        if (!empty($totalsFormatted)) {
+            $message .= "\n*Totals:*\n" . $totalsFormatted . "\n";
+        }
+
+        return ['photo' => $result->file?->file_id, 'text' => $message];
+    }
+}
