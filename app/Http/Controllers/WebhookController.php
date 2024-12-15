@@ -45,6 +45,46 @@ class WebhookController
                     throw new Exception('Failed to process message.');
                 }
 
+                if (in_array($message->type, ['document', 'photo', 'video'])) {
+                    $hourlyCount = $chat->files()
+                        ->where('files.created_at', '>', now()->subHour())
+                        ->count();
+
+                    if ($hourlyCount > 30) {
+                        $bot->sendMessage([
+                            'chat_id' => $chat->unique_id,
+                            'text' => "Upload ignored and will not be processed.",
+                        ]);
+
+                        $bot->sendMessage([
+                            'chat_id' => $chat->unique_id,
+                            'text' => "Unfortunately, you have reached the maximum number of files per hour. \n\n"
+                                . "Please, try again in an hour.",
+                        ]);
+
+                        return response()->json(['message' => 'OK']);
+                    }
+
+                    $dailyCount = $chat->files()
+                        ->where('files.created_at', '>', now()->setTime(0, 0, 1))
+                        ->count();
+
+                    if ($dailyCount > 100) {
+                        $bot->sendMessage([
+                            'chat_id' => $chat->unique_id,
+                            'text' => "Upload ignored and will not be processed.",
+                        ]);
+
+                        $bot->sendMessage([
+                            'chat_id' => $chat->unique_id,
+                            'text' => "Unfortunately, you have reached the maximum number of files per day. \n\n"
+                                . "Please, try again tomorrow.",
+                        ]);
+
+                        return response()->json(['message' => 'OK']);
+                    }
+                }
+
                 if ($message->type === 'document') {
                     $document = BotResolver::document($bot, $message, $chat);
                 }
@@ -53,9 +93,9 @@ class WebhookController
                     $photo = BotResolver::photo($bot, $message, $chat);
                 }
 
-                if ($message->type === 'video') {
-                    $video = BotResolver::video($bot, $message, $chat);
-                }
+                // if ($message->type === 'video') {
+                //     $video = BotResolver::video($bot, $message, $chat);
+                // }
 
                 $this->after($message);
             } catch (Throwable $e) {

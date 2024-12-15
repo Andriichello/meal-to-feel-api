@@ -5,6 +5,8 @@ namespace App\Flows;
 use App\Enums\FlowName;
 use App\Enums\FlowStatus;
 use App\Enums\FlowStep;
+use App\Enums\MealStatus;
+use App\Jobs\ProcessMeal;
 use App\Models\Chat;
 use App\Models\Meal;
 use App\Models\Message;
@@ -26,6 +28,15 @@ class AddMeal extends BaseFlow
      * @var FlowName
      */
     public static FlowName $name = FlowName::AddMeal;
+
+    /**
+     * Commands that can be used to start current flow.
+     *
+     * @var string[]
+     */
+    public static array $command = [
+        '/add_meal',
+    ];
 
     /**
      * Texts that can be used to start current flow.
@@ -51,6 +62,13 @@ class AddMeal extends BaseFlow
 
         $chat = $message->chat;
         $active = $chat->activeFlow;
+
+        if ($message->type === 'command') {
+            if ($message->text === '/save') {
+                $message->type = 'text';
+                $message->text = 'Save';
+            }
+        }
 
         if ($message->type === 'text') {
             $step = match ($message->text) {
@@ -81,6 +99,7 @@ class AddMeal extends BaseFlow
                     if ($active?->images()->exists()) {
                         $meal = new Meal();
 
+                        $meal->status = MealStatus::Pending;
                         $meal->user_id = $active->user?->id;
                         $meal->chat_id = $active->chat?->id;
                         $meal->flow_id = $active->id;
@@ -106,6 +125,16 @@ class AddMeal extends BaseFlow
                                 . "Photos: " . $images,
                             'reply_markup' => $this->markup($chat),
                         ]);
+
+                        $api->sendMessage([
+                            'chat_id' => $chat->unique_id,
+                            'text' => "I already scheduled the calories estimation for you meal. \n\n" .
+                                "I will send you the result when it will be done. ",
+                            'reply_markup' => $this->markup($chat),
+                        ]);
+
+//                        dispatch(new ProcessMeal($meal->id));
+                        (new ProcessMeal($meal->id))->handle();
                     } else {
                         $api->sendMessage([
                             'chat_id' => $chat->unique_id,
@@ -220,7 +249,8 @@ class AddMeal extends BaseFlow
         } else if (in_array($message->type, ['photo', 'document'])) {
             $api->sendMessage([
                 'chat_id' => $message->chat->unique_id,
-                'text' => 'Image received.',
+                'text' => "Image received.\n\n"
+                    . "It will be processed after you /save the meal entry.",
                 'reply_markup' => $this->markup($chat),
             ]);
         }
@@ -290,14 +320,15 @@ class AddMeal extends BaseFlow
     {
         $active = $chat->activeFlow;
 
-        $text = $active->step
-            ? "You may continue uploading photos right away.\n\n"
-            : "New meal flow started.\n\n"
-            . "You may start uploading photos right away.\n\n";
+        $images = $active->images()->count();
+
+        $text = "New meal flow started.\n\n";
+        $text .= $images > 0
+            ? "You may continue uploading photos.\n\n"
+            : "You may start uploading photos right away.\n\n";
 
         $date = ($active->date ?? $active->created_at->format('d.m.Y'));
         $time = ($active->time ?? $active->created_at->format('H:i'));
-        $images = $active->images()->count();
 
         $text .= "Date: " . $date . "\n"
             . "Time: " . $time . "\n\n"
@@ -308,5 +339,36 @@ class AddMeal extends BaseFlow
             'text' => $text,
             'reply_markup' => $this->markup($chat),
         ]);
+    }
+
+    /**
+     * If true then current flow starts with the given message.
+     *
+     * @param Message $message
+     *
+     * @return bool
+     */
+    public static function startsWith(Message $message): bool
+    {
+        $does = parent::startsWith($message);
+
+        if ($does) {
+            return true;
+        }
+
+        $isImage = $message->type !== 'text'
+            && $message->files()->images()->exists();
+
+        if ($isImage) {
+            if (!$message->chat->activeFlow) {
+                return true;
+            }
+
+            if ($message->chat->activeFlow->command !== FlowName::AddMeal->value) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Observers;
 
-use App\Jobs\NotifyAboutResult;
 use App\Models\Credential;
 use App\Models\Result;
 use Illuminate\Support\Carbon;
-use Throwable;
 
 /**
  * Class ResultObserver.
@@ -27,16 +25,16 @@ class ResultObserver
             $credential->save();
         }
 
-        try {
-            if (empty($result->notified_at)) {
-                (new NotifyAboutResult($result))->handle();
-
-                $result->notified_at = now();
-                $result->save();
-            }
-        } catch (Throwable) {
-            //
-        }
+        // try {
+        //     if (empty($result->meal_id) && empty($result->notified_at)) {
+        //         (new NotifyAboutResult($result))->handle();
+        //
+        //         $result->notified_at = now();
+        //         $result->save();
+        //     }
+        // } catch (Throwable) {
+        //     //
+        // }
     }
 
     /**

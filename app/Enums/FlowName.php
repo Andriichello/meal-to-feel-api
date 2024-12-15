@@ -7,5 +7,7 @@ namespace App\Enums;
  */
 enum FlowName: string
 {
+    case Start = 'start';
+    case SetTrainer = 'set-trainer';
     case AddMeal = 'add-meal';
 }

@@ -50,7 +50,7 @@ class Meal extends Model
         'time',
         'metadata',
         'notified_at',
-        'performed_at',
+        'processed_at',
     ];
 
     /**
@@ -64,7 +64,7 @@ class Meal extends Model
         'status' => MealStatus::class,
         'metadata' => 'object',
         'notified_at' => 'datetime',
-        'performed_at' => 'datetime',
+        'processed_at' => 'datetime',
     ];
 
     /**

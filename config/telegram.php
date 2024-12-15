@@ -1,5 +1,6 @@
 <?php
 
+use App\Flows as Flows;
 use App\Commands\AddMeal;
 use App\Commands\Cancel;
 use App\Commands\Skip;
@@ -52,7 +53,9 @@ return [
             ],
 
             'flows' => [
-                \App\Flows\AddMeal::class,
+                Flows\Start::class,
+                Flows\SetTrainer::class,
+                Flows\AddMeal::class,
             ],
         ],
 

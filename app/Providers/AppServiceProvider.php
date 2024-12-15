@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\File;
+use App\Models\Meal;
 use App\Models\Result;
 use App\Observers\FileObserver;
+use App\Observers\MealObserver;
 use App\Observers\ResultObserver;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         File::observe(FileObserver::class);
+        Meal::observe(MealObserver::class);
         Result::observe(ResultObserver::class);
     }
 }

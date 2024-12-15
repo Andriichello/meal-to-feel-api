@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\FlowName;
+use App\Enums\FlowStatus;
 use App\Enums\ResultStatus;
 use App\Helpers\VisionApiHelper;
 use App\Models\File;
@@ -87,7 +89,8 @@ class ProcessPhotoViaApi implements ShouldQueue, ShouldBeUnique
         $result->tried_at = now();
 
         if ($context instanceof Message) {
-            $flow = $file->context->flows()
+            $flow = $context->flows()
+                ->where('command', FlowName::AddMeal->value)
                 ->latest()
                 ->first();
 

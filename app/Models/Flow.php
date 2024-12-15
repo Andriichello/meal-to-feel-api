@@ -8,6 +8,7 @@ use Database\Factories\FlowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Carbon;
 use stdClass;
@@ -34,6 +35,7 @@ use stdClass;
  * @property User|null $user
  * @property Message $beg
  * @property Message|null $end
+ * @property Meal|null $meal
  *
  * @method static FlowQuery query()
  * @method static FlowFactory factory(...$parameters)
@@ -79,6 +81,7 @@ class Flow extends Model
         'user',
         'beg',
         'end',
+        'meal',
     ];
 
     /**
@@ -122,6 +125,17 @@ class Flow extends Model
     }
 
     /**
+     * Associated (latest) active flow relation query.
+     *
+     * @return HasOne
+     */
+    public function meal(): HasOne
+    {
+        return $this->hasOne(Meal::class, 'flow_id', 'id')
+            ->latestOfMany();
+    }
+
+    /**
      * Associated files query.
      *
      * @return FileQuery
@@ -141,6 +155,9 @@ class Flow extends Model
                 $q->where('messages.unique_id', '<=', $this->end_id);
             }
         });
+
+        $query->orderByDesc('files.id');
+        $query->select('files.*');
 
         return $query;
     }

@@ -7,6 +7,7 @@ namespace App\Enums;
  */
 enum MealStatus: string
 {
+    case Draft = 'Draft';
     case Pending = 'Pending';
     case Canceled = 'Canceled';
     case Processed = 'Processed';

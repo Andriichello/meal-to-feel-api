@@ -70,7 +70,7 @@ class FlowQuery extends BaseQuery
                 $status = $status->value;
             }
 
-            $values = $status;
+            $values[] = $status;
         }
 
         $this->whereIn('status', $values);

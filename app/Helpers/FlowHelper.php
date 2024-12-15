@@ -70,19 +70,6 @@ class FlowHelper
     }
 
     /**
-     * Determines if message is a starting one for the flow.
-     *
-     * @param string $message
-     * @param class-string<BaseFlow> $flow
-     *
-     * @return bool
-     */
-    public function isStarting(string $message, string $flow): bool
-    {
-        return in_array($message, $flow::$start);
-    }
-
-    /**
      * Resolves flow for the given message.
      *
      * @param Message $message
@@ -96,13 +83,11 @@ class FlowHelper
     {
         $flows = $this->flows();
 
-        if ($message->type === 'text' && $message->text) {
-            $start = array_filter(
-                $flows,
-                /** @var class-string<BaseFlow> $flow */
-                fn (string $flow) => $this->isStarting($message->text, $flow)
-            );
-        }
+        $start = array_filter(
+            $flows,
+            /** @var class-string<BaseFlow> $flow */
+            fn (string $flow) => $flow::startsWith($message)
+        );
 
         if ($message->chat->activeFlow) {
             $name = FlowName::tryFrom($message->chat->activeFlow->command);
@@ -118,7 +103,7 @@ class FlowHelper
             ];
         }
 
-        return ['active' => $details ?? null, 'start' => $start[0] ?? null];
+        return ['active' => $details ?? null, 'start' => Arr::first($start) ?? null];
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FlowStatus;
 use App\Models\Traits\HasFiles;
 use App\Queries\Models\FlowQuery;
 use App\Queries\Models\MessageQuery;
@@ -95,9 +96,27 @@ class Message extends Model
             ->where('beg_id', '<=', $this->unique_id)
             ->where(function (FlowQuery $query) {
                 $query->whereNull('end_id')
-                    ->orWhere('end_id', '<=', $this->unique_id);
-            });
+                    ->orWhere('end_id', '>=', $this->unique_id);
+            })
+            ->latest();
     }
+
+    /**
+     * Associated relevant flows query.
+     *
+     * @return FlowQuery
+     */
+    public function relevantFlows(): FlowQuery
+    {
+        return $this->flows()
+            ->withStatus(
+                FlowStatus::New,
+                FlowStatus::Initiated,
+                FlowStatus::InProgress,
+                FlowStatus::Finished
+            );
+    }
+
 
     /**
      * Returns photo variants available to download.

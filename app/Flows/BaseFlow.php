@@ -23,6 +23,13 @@ abstract class BaseFlow
     public static FlowName $name = FlowName::AddMeal;
 
     /**
+     * Commands that can be used to start current flow.
+     *
+     * @var string[]
+     */
+    public static array $command = [];
+
+    /**
      * Texts that can be used to start current flow.
      *
      * @var string[]
@@ -74,5 +81,24 @@ abstract class BaseFlow
             'chat_id' => $chat->unique_id,
             'text' => $this->initiation,
         ]);
+    }
+
+    /**
+     * If true then current flow starts with the given message.
+     *
+     * @param Message $message
+     *
+     * @return bool
+     */
+    public static function startsWith(Message $message): bool
+    {
+        $text = data_get($message, 'text');
+
+        if ($text !== null) {
+            return in_array($text, static::$start)
+                || in_array($text, static::$command);
+        }
+
+        return false;
     }
 }

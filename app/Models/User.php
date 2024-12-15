@@ -3,9 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
 use App\Queries\Models\UserQuery;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -18,6 +20,8 @@ use Illuminate\Support\Collection;
  *
  * Common:
  * @property int $id
+ * @property int|null $trainer_id
+ * @property Role $role
  * @property string $name
  * @property string|null $language
  * @property object|null $metadata
@@ -37,6 +41,7 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
+ * @property User|null $trainer
  * @property Chat[]|Collection $chats
  *
  * @method static UserQuery query()
@@ -54,6 +59,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         /** Common */
+        'trainer_id',
+        'role',
         'name',
         'language',
 
@@ -85,6 +92,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $casts = [
+        'role' => Role::class,
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_bot' => 'boolean',
@@ -98,8 +106,19 @@ class User extends Authenticatable
      * @var array
      */
     protected array $relationships = [
+        'trainer',
         'chats',
     ];
+
+    /**
+     * Associated trainer relation query.
+     *
+     * @return BelongsTo
+     */
+    public function trainer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'trainer_id', 'id');
+    }
 
     /**
      * Associated chats relation query.
@@ -112,7 +131,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns true user has email and password set.
+     * Returns true if user has email and password set.
      *
      * @return bool
      */
@@ -122,13 +141,25 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns true user has Telegram's user id (`unique_id`) set.
+     * Returns true if user has Telegram's user id (`unique_id`) set.
      *
      * @return bool
      */
     public function isTelegram(): bool
     {
         return !empty($this->unique_id);
+    }
+
+    /**
+     * Returns true if user has given role set.
+     *
+     * @param Role|null $role
+     *
+     * @return bool
+     */
+    public function isOfRole(?Role $role): bool
+    {
+        return $this->role === $role;
     }
 
     /**

@@ -84,8 +84,8 @@ class FileQuery extends BaseQuery
     public function images(): static
     {
         $this->where(function (FileQuery $q) {
-            $q->whereLike('type', 'image/%')
-                ->orWhereLike('type', 'photo%');
+            $q->whereLike('files.type', 'image/%')
+                ->orWhereLike('files.type', 'photo%');
         });
 
         return $this;

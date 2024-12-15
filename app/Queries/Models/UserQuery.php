@@ -2,6 +2,8 @@
 
 namespace App\Queries\Models;
 
+use App\Enums\FlowStatus;
+use App\Enums\Role;
 use App\Models\User;
 use App\Queries\BaseQuery;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,4 +54,29 @@ class UserQuery extends BaseQuery
 
         return $this;
     }
+
+    /**
+     * Filters down to users that have given roles.
+     *
+     * @param string|Role ...$roles
+     *
+     * @return UserQuery
+     */
+    public function withRole(string|Role ...$roles): UserQuery
+    {
+        $values = [];
+
+        foreach ($roles as $role) {
+            if ($role instanceof FlowStatus) {
+                $role = $role->value;
+            }
+
+            $values[] = $role;
+        }
+
+        $this->whereIn('role', $values);
+
+        return $this;
+    }
+
 }

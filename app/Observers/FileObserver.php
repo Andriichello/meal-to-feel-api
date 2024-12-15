@@ -22,27 +22,27 @@ class FileObserver
      */
     public function saved(File $file): void
     {
-        if (!$file->isImage()) {
-            return;
-        }
-
-        if (!empty($file->exception)) {
-            return;
-        }
-
-        if ($file->context_type !== MorphServiceProvider::slugOf(Message::class)) {
-            return;
-        }
-
-         if ($file->results()->exists()) {
-             return;
-         }
-
-         try {
-             dispatch(new ProcessPhotoViaApi($file->id));
-         } catch (Throwable $e) {
-             $file->exception = $e->getMessage();
-             $file->save();
-         }
+//        if (!$file->isImage()) {
+//            return;
+//        }
+//
+//        if (!empty($file->exception)) {
+//            return;
+//        }
+//
+//        if ($file->context_type !== MorphServiceProvider::slugOf(Message::class)) {
+//            return;
+//        }
+//
+//        if ($file->results()->exists()) {
+//            return;
+//        }
+//
+//        try {
+//            dispatch(new ProcessPhotoViaApi($file->id));
+//        } catch (Throwable $e) {
+//            $file->exception = $e->getMessage();
+//            $file->save();
+//        }
     }
 }
