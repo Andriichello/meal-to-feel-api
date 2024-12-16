@@ -21,6 +21,13 @@ use Illuminate\Support\Collection;
  * @property MealStatus $status
  * @property string $date
  * @property string $time
+ * @property float|null $weight
+ * @property float|null $calories
+ * @property float|null $carbohydrates
+ * @property float|null $protein
+ * @property float|null $fat
+ * @property float|null $fiber
+ * @property float|null $sugar
  * @property object|null $metadata
  * @property Carbon|null $notified_at
  * @property Carbon|null $processed_at
@@ -48,6 +55,13 @@ class Meal extends Model
         'status',
         'date',
         'time',
+        'weight',
+        'calories',
+        'carbohydrates',
+        'protein',
+        'fat',
+        'fiber',
+        'sugar',
         'metadata',
         'notified_at',
         'processed_at',
@@ -59,9 +73,16 @@ class Meal extends Model
      * @var array
      */
     protected $casts = [
+        'status' => MealStatus::class,
         'date' => 'datetime',
         'time' => 'datetime',
-        'status' => MealStatus::class,
+        'weight' => 'float',
+        'calories' => 'float',
+        'carbohydrates' => 'float',
+        'protein' => 'float',
+        'fat' => 'float',
+        'fiber' => 'float',
+        'sugar' => 'float',
         'metadata' => 'object',
         'notified_at' => 'datetime',
         'processed_at' => 'datetime',

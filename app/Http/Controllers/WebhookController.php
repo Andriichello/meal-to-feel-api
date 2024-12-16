@@ -50,7 +50,7 @@ class WebhookController
                         ->where('files.created_at', '>', now()->subHour())
                         ->count();
 
-                    if ($hourlyCount > 30) {
+                    if ($hourlyCount > $from->hourlyUploadsLimit()) {
                         $bot->sendMessage([
                             'chat_id' => $chat->unique_id,
                             'text' => "Upload ignored and will not be processed.",
@@ -69,7 +69,7 @@ class WebhookController
                         ->where('files.created_at', '>', now()->setTime(0, 0, 1))
                         ->count();
 
-                    if ($dailyCount > 100) {
+                    if ($dailyCount > $from->dailyUploadsLimit()) {
                         $bot->sendMessage([
                             'chat_id' => $chat->unique_id,
                             'text' => "Upload ignored and will not be processed.",

@@ -163,6 +163,42 @@ class User extends Authenticatable
     }
 
     /**
+     * Get hourly uploads limit for current user.
+     *
+     * @return int
+     */
+    public function hourlyUploadsLimit(): int
+    {
+        if ($this->isOfRole(Role::Admin)) {
+            return 300;
+        }
+
+        if ($this->isOfRole(Role::Trainer)) {
+            return 100;
+        }
+
+        return 30;
+    }
+
+    /**
+     * Get daily uploads limit for current user.
+     *
+     * @return int
+     */
+    public function dailyUploadsLimit(): int
+    {
+        if ($this->isOfRole(Role::Admin)) {
+            return 900;
+        }
+
+        if ($this->isOfRole(Role::Trainer)) {
+            return 300;
+        }
+
+        return 100;
+    }
+
+    /**
      * Create a new Eloquent query builder for the model.
      *
      * @param DatabaseBuilder $query

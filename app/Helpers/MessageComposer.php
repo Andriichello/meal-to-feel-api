@@ -102,7 +102,30 @@ class MessageComposer
      */
     public static function meal(Meal $meal): ?array
     {
-        $totalsFormatted = static::totals(data_get($meal->metadata, 'summary.total'));
+        $total = (array) data_get($meal->metadata, 'summary.total');
+
+        $hasValues = false;
+
+        foreach ($total as $value) {
+            if (empty($value)) {
+                continue;
+            }
+
+            $hasValues = true;
+        }
+
+        if (!$hasValues) {
+            $message = "\n❌ *Summary:*\n\n"
+                . static::escape("Failed to estimate calories (might be due to food not being recognized).");
+
+            return [
+                'chat_id' => $meal->chat->unique_id,
+                'text' => $message,
+                'parse_mode' => 'MarkdownV2',
+            ];
+        }
+
+        $totalsFormatted = static::totals($total);
 
         if (!empty($totalsFormatted)) {
             $message = "\n✅ *Summary:*\n\n" . $totalsFormatted;

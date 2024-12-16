@@ -101,7 +101,12 @@ class ProcessMeal implements ShouldQueue
         }
 
         $metadata = (array) ($meal->metadata ?? []);
-        data_set($metadata, 'summary', $this->summary($results));
+        data_set($metadata, 'summary', $summary = $this->summary($results));
+
+        $total = (array) data_get($summary, 'total');
+        foreach ($total as $key => $value) {
+            $meal->setAttribute($key, empty($value) ? 0.0 : $value);
+        }
 
         $meal->metadata = (object) $metadata;
         $meal->status = MealStatus::Processed;
