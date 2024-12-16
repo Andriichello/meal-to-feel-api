@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Enums\ResultStatus;
+use App\Models\Meal;
 use App\Models\Result;
 
 /**
@@ -66,46 +67,7 @@ class MessageComposer
                     ? "✅ *Processed*"
                     : "❌ *$error*";
 
-                $total = data_get($payload, 'total');
-
-                if (!empty($total)) {
-                    $totalsFormatted = "";
-
-                    $value = data_get($total, 'weight');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Weight:* " . static::escape(sprintf("%dg", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'calories');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Calories:* " . static::escape(sprintf("%d kcal", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'carbohydrates');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Carbohydrates:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'fiber');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Fiber:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'sugar');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Sugar:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'protein');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Protein:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
-                    }
-
-                    $value = data_get($total, 'fat');
-                    if (!empty($value)) {
-                        $totalsFormatted .= "• *Fat:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
-                    }
-                }
+                $totalsFormatted = static::totals(data_get($payload, 'total'));
             }
         }
 
@@ -129,5 +91,78 @@ class MessageComposer
             'text' => $message,
             'parse_mode' => 'MarkdownV2',
         ];
+    }
+
+    /**
+     * Compose a message about the meal estimation result.
+     *
+     * @param Meal $meal
+     *
+     * @return null|array{chat_id: int, text: string, parse_mode: string}
+     */
+    public static function meal(Meal $meal): ?array
+    {
+        $totalsFormatted = static::totals(data_get($meal->metadata, 'summary.total'));
+
+        if (!empty($totalsFormatted)) {
+            $message = "\n✅ *Summary:*\n\n" . $totalsFormatted;
+
+            return [
+                'chat_id' => $meal->chat->unique_id,
+                'text' => $message,
+                'parse_mode' => 'MarkdownV2',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Compose totals string.
+     *
+     * @param mixed $total
+     *
+     * @return string|null
+     */
+    protected static function totals(mixed $total): ?string
+    {
+        $totalsFormatted = "";
+
+        $value = data_get($total, 'weight');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Weight:* " . static::escape(sprintf("%dg", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'calories');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Calories:* " . static::escape(sprintf("%d kcal", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'carbohydrates');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Carbohydrates:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'fiber');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Fiber:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'sugar');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Sugar:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'protein');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Protein:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+        }
+
+        $value = data_get($total, 'fat');
+        if (!empty($value)) {
+            $totalsFormatted .= "• *Fat:* " . static::escape(sprintf("%.2fg", $value)) . "\n";
+        }
+
+        return empty($totalsFormatted) ? null : $totalsFormatted;
     }
 }

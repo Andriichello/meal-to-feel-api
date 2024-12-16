@@ -96,8 +96,6 @@ class ProcessMeal implements ShouldQueue
             $result = $image->results()->latest()->first();
 
             if ($result) {
-                (new NotifyAboutResult($result))->handle();
-
                 $results[] = $result;
             }
         }
@@ -108,6 +106,14 @@ class ProcessMeal implements ShouldQueue
         $meal->metadata = (object) $metadata;
         $meal->status = MealStatus::Processed;
         $meal->save();
+
+        if ($this->notify) {
+            foreach ($results as $result) {
+                (new NotifyAboutResult($result))->handle();
+            }
+
+            (new NotifyAboutSummary($meal))->handle();
+        }
     }
 
     /**
@@ -121,7 +127,7 @@ class ProcessMeal implements ShouldQueue
     {
         $summary = [
             'ingredients' => [],
-            'totals' => [
+            'total' => [
                 'weight' => 0,
                 'fat' => 0,
                 'fiber' => 0,
@@ -144,10 +150,10 @@ class ProcessMeal implements ShouldQueue
                 continue;
             }
 
-            // Sum up totals
+            // Sum up total
             foreach ($payload['total'] as $key => $value) {
-                if (array_key_exists($key, $summary['totals'])) {
-                    $summary['totals'][$key] += $value;
+                if (array_key_exists($key, $summary['total'])) {
+                    $summary['total'][$key] += $value;
                 }
             }
 
