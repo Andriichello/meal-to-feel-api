@@ -80,7 +80,7 @@ class Start extends BaseFlow
                 $message->chat->load('activeFlow');
 
                 /** @var Start $flow */
-                $flow = app(Start::class);
+                $flow = app(SetTrainer::class);
                 $flow->handle($message, $api);
 
                 return;
@@ -114,5 +114,23 @@ class Start extends BaseFlow
             ]);
 
         return $markup;
+    }
+
+    /**
+     * If true then current flow starts with the given message.
+     *
+     * @param Message $message
+     *
+     * @return bool
+     */
+    public static function startsWith(Message $message): bool
+    {
+        $does = parent::startsWith($message);
+
+        if ($does) {
+            return $message->chat->user->isOfRole(Role::User);
+        }
+
+        return false;
     }
 }
